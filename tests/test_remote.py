@@ -5,7 +5,7 @@ import httpx
 import pytest
 from androidtvremote2 import ConnectionClosed
 
-from whatson import apps, db
+from whatson import apps, db, remote_routes
 from whatson.devices.androidtv import AndroidTVDriver
 from whatson.sources.jellyfin import Jellyfin, JellyfinError
 
@@ -101,3 +101,13 @@ def test_held_connection_is_reused_and_reopened_when_dropped(tmp_path, monkeypat
     assert made[1].sent == [("DPAD_UP", "SHORT"), ("VOLUME_UP", "START_LONG")]
     drv.drop_idle(max_idle=-1)
     assert made[1].disconnected and not drv._held
+
+
+def test_saved_jellyfin_key_only_goes_to_the_address_it_was_saved_with(monkeypatch):
+    conn = db.connect(":memory:")
+    monkeypatch.setattr(remote_routes.state, "conn", conn)
+    db.set_meta(conn, "jellyfin.url", "http://jf.lan:8096")
+    db.set_meta(conn, "jellyfin.key", "s3cret")
+    assert remote_routes._key_for("http://jf.lan:8096", "") == "s3cret"
+    assert remote_routes._key_for("http://elsewhere.lan:8096", "") == ""
+    assert remote_routes._key_for("http://elsewhere.lan:8096", " typed ") == "typed"

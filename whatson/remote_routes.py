@@ -61,6 +61,14 @@ def _jf_public() -> dict:
             "server_name": db.get_meta(state.conn, "jellyfin.name")}
 
 
+def _key_for(url: str, typed: str) -> str:
+    """The typed key, else the saved one, but only for the address it was saved with: a saved key
+    must never be sent to a server someone has just typed in."""
+    if typed.strip():
+        return typed.strip()
+    return db.get_meta(state.conn, "jellyfin.key") if url == db.get_meta(state.conn, "jellyfin.url") else ""
+
+
 class JellyfinIn(BaseModel):
     url: str
     key: str = ""
@@ -74,7 +82,7 @@ async def jellyfin_settings():
 @router.put("/settings/jellyfin")
 async def save_jellyfin(body: JellyfinIn):
     url = body.url.strip().rstrip("/")
-    key = body.key.strip() or db.get_meta(state.conn, "jellyfin.key")
+    key = _key_for(url, body.key)
     if not url or not key:
         raise HTTPException(400, "Enter the server address and an API key")
     await _check_url(url)
