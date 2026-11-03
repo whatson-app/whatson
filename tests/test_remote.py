@@ -1,12 +1,14 @@
 import asyncio
 import json
+import time
 
 import httpx
 import pytest
 from androidtvremote2 import ConnectionClosed
 
-from whatson import apps, db, remote_routes
+from whatson import apps, db, devices, remote_routes, routes, tune
 from whatson.devices.androidtv import AndroidTVDriver
+from whatson.sources.base import Session
 from whatson.sources.jellyfin import Jellyfin, JellyfinError
 
 
@@ -68,8 +70,11 @@ def test_jellyfin_sessions_and_commands():
 
 
 class FakeRemote:
-    def __init__(self, fail_first=False):
+    is_on, volume_info = True, None
+
+    def __init__(self, fail_first=False, current_app=""):
         self.sent, self.fail_first, self.disconnected = [], fail_first, False
+        self.current_app = current_app
 
     def send_key_command(self, key, direction):
         if self.fail_first:
@@ -101,6 +106,37 @@ def test_held_connection_is_reused_and_reopened_when_dropped(tmp_path, monkeypat
     assert made[1].sent == [("DPAD_UP", "SHORT"), ("VOLUME_UP", "START_LONG")]
     drv.drop_idle(max_idle=-1)
     assert made[1].disconnected and not drv._held
+
+
+@pytest.mark.parametrize("current_app, playing, key, sent", [
+    (tune.PLEZY, True, "stop", "BACK"),               # Plezy's player ignores MEDIA_STOP
+    (tune.PLEZY, False, "stop", "MEDIA_STOP"),        # BACK here would walk through Plezy's menus
+    ("com.plexapp.android", True, "stop", "MEDIA_STOP"),
+    (tune.PLEZY, True, "play_pause", "MEDIA_PLAY_PAUSE"),
+])
+def test_now_playing_stop_key_suits_the_app_in_front(tmp_path, monkeypatch, current_app, playing, key, sent):
+    conn = db.connect(":memory:")
+    host = "192.0.2.5"
+    device_id = devices.add_device(conn, "Test TV", host)
+    drv = AndroidTVDriver(tmp_path, "WhatsOn")
+    remote = FakeRemote(current_app=current_app)
+    drv._held[host] = [remote, time.monotonic()]
+    session = Session(player_title="Test TV", player_address=host, product="Plezy", state="playing", title="A Film",
+                      live=False, kind="movie")
+
+    class FakeSource:
+        async def playing(self):
+            return [session] if playing else []
+
+    monkeypatch.setattr(AndroidTVDriver, "_alive", staticmethod(lambda r: not r.disconnected))
+    monkeypatch.setattr(routes.state, "conn", conn, raising=False)
+    monkeypatch.setattr(routes.state, "source", FakeSource(), raising=False)
+    monkeypatch.setattr(routes.state, "drivers", {"androidtv": drv}, raising=False)
+    # Cache the opposite answer: the player may have closed since, so Stop has to ask again.
+    routes.remember(f"now:{device_id}", {"state": "app" if playing else "playing"})
+
+    asyncio.run(routes.press_key(device_id, routes.KeyIn(key=key)))
+    assert remote.sent == [(sent, "SHORT")]
 
 
 def test_saved_jellyfin_key_only_goes_to_the_address_it_was_saved_with(monkeypatch):
