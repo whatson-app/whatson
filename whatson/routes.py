@@ -172,14 +172,27 @@ class KeyIn(BaseModel):
     key: str
 
 
+async def _stop_key(device_id: int, d: dict) -> str:
+    """Plezy's video player ignores MEDIA_STOP and only leaves on BACK. BACK also walks through Plezy's
+    menus, so it's sent only while the server still reports something playing on this TV."""
+    st = await state.drivers[d["kind"]].status(d["host"])
+    if st.current_app != tune.PLEZY:
+        return "MEDIA_STOP"
+    _cache.pop(f"now:{device_id}", None)
+    return "MEDIA_STOP" if (await now_playing(device_id))["state"] == "app" else "BACK"
+
+
 @router.post("/devices/{device_id}/key")
 async def press_key(device_id: int, body: KeyIn):
     keys = {"play_pause": "MEDIA_PLAY_PAUSE", "stop": "MEDIA_STOP", "back": "BACK", "home": "HOME"}
     if body.key not in keys:
         raise HTTPException(400, f"Keys: {', '.join(keys)}")
     d = _device(device_id)
+    key = keys[body.key]
     try:
-        await state.drivers[d["kind"]].send_key(d["host"], keys[body.key])
+        if body.key == "stop":
+            key = await _stop_key(device_id, d)
+        await state.drivers[d["kind"]].send_key(d["host"], key)
     except Exception as exc:
         raise HTTPException(502, f"Couldn't reach {d['name']}: {exc}") from exc
     _cache.pop(f"now:{device_id}", None)
