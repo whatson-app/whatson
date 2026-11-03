@@ -126,6 +126,23 @@ outside, call the server through `api()`, and check it at phone width and in lig
 Maintainers handle versions, tags and releases. By contributing, you agree your work is released under the
 [MIT License](LICENSE).
 
+## Releases (maintainers)
+
+Versions follow [semver](https://semver.org). A release normally bumps the last number, whatever it holds. The middle
+number goes up when a release is a big step, or changes something people must act on.
+
+1. Set the version in `pyproject.toml` and `whatson/__init__.py`.
+2. In `CHANGELOG.md`, rename `## Unreleased` to `## X.Y.Z - YYYY-MM-DD` and start a new empty `## Unreleased` above it.
+3. Merge that, then tag the merged commit on `main` and push the tag:
+
+   ```bash
+   git tag vX.Y.Z && git push origin vX.Y.Z
+   ```
+
+The release workflow checks that the tag, both version files and the changelog agree. It then publishes
+`ghcr.io/whatson-app/whatson:X.Y.Z`, `:X.Y` and `:latest` for amd64 and arm64, runs them, and creates a GitHub release
+whose notes are that version's changelog section. If an earlier step fails, no release is created.
+
 ## Conduct
 
 Be kind and assume good faith. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
