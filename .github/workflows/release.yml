@@ -1,18 +1,33 @@
-name: Release image
+name: Release
 
-# Tag a version (git tag v0.1.0 && git push origin v0.1.0) to publish ghcr.io/<owner>/<repo>.
+# Push a tag vX.Y.Z that matches pyproject.toml, whatson/__init__.py and a "## X.Y.Z" section in CHANGELOG.md. This
+# publishes ghcr.io/<owner>/<repo>:X.Y.Z, :X.Y and :latest for amd64 and arm64, runs them, and only then creates the
+# GitHub release, with that version's changelog section as its notes.
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["v*.*.*"]
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  image:
+  check:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Tag, version files and CHANGELOG.md agree
+        run: python scripts/release_notes.py "${GITHUB_REF_NAME#v}"
+
+  image:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
@@ -28,6 +43,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -54,3 +70,18 @@ jobs:
           done
           docker logs whatson
           exit 1
+
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python scripts/release_notes.py "${GITHUB_REF_NAME#v}" > release-notes.md
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --title "WhatsOn ${GITHUB_REF_NAME#v}" --notes-file release-notes.md --verify-tag
