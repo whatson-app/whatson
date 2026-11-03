@@ -7,6 +7,10 @@ listings say "Live: College Football". WhatsOn reads your server's guide, matche
 real games (teams, live scores) and lets you search across the guide and your library. Pick a TV and
 it tunes the channel or starts the movie there.
 
+> **You need [Plezy](https://github.com/edde746/plezy) on each TV.** WhatsOn starts everything on a TV through
+> that app, and Plezy has to be signed in to the same server. Without it, WhatsOn can search and work as a
+> remote, but it can't start anything. See [Requirements](#requirements).
+
 ## What it does
 
 ![The Live TV guide: a search bar, picks for what's on now, and a channel grid](docs/screenshots/live.png)
