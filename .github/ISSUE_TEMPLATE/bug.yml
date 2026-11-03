@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in WhatsOn is wrong or broken
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Before you paste logs or screenshots, remove anything about your home:** keys and
+        tokens, LAN addresses, TV and room names, server ids and account names. Security problems go to the private
+        report in SECURITY.md, not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open Live TV\n2. ..."
+  - type: input
+    id: version
+    attributes:
+      label: WhatsOn version
+      description: The image tag you run, or the commit if you built it yourself
+      placeholder: "0.1.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Media server
+      options: [Plex, Jellyfin, Not related]
+  - type: input
+    id: tv
+    attributes:
+      label: TV and app
+      placeholder: "Chromecast with Google TV, Plezy 1.x"
+  - type: dropdown
+    id: install
+    attributes:
+      label: How it runs
+      options: [Docker Compose, Unraid, Other Docker, From source]
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "`docker logs whatson`, trimmed to the relevant part, with details of your home removed"
+      render: text
