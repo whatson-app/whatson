@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import os
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
@@ -37,6 +40,14 @@ def test_a_tag_that_disagrees_with_the_repo_is_refused(tmp_path, monkeypatch, ca
 @pytest.mark.parametrize("bad", ["v1.2.3", "1.2", "latest"])
 def test_a_tag_that_is_not_a_version_is_refused(bad):
     assert release_notes.main(["x", bad]) == 2
+
+
+def test_notes_print_on_a_console_that_is_not_utf8():
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    run = subprocess.run([sys.executable, str(ROOT / "scripts" / "release_notes.py"), version], capture_output=True,
+                         env={**os.environ, "PYTHONIOENCODING": "cp1252"})
+    assert run.returncode == 0, run.stderr.decode()
+    assert run.stdout.decode("utf-8").replace("\r\n", "\n").strip() == release_notes.notes(version)
 
 
 def test_this_repo_could_release_its_current_version():

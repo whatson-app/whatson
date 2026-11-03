@@ -47,4 +47,5 @@ def main(argv: list[str]) -> int:
 
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")  # the changelog isn't plain ASCII, and a Windows console may not be UTF-8
     sys.exit(main(sys.argv))
