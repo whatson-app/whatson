@@ -28,7 +28,8 @@ def apply() -> None:
     """Point the Plex client at whatever is saved now, and reload the guide and library."""
     pc = plex_auth.load(state.conn)
     state.plex.configure(pc.url, pc.token)
-    state.refresher.kick()
+    if state.source is state.plex:
+        state.refresher.kick()
 
 
 async def _check(url: str) -> None:

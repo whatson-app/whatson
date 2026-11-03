@@ -159,6 +159,7 @@ def test_host_guard():
 
 def test_links():
     assert tune.live_link("706") == "plezy://live?channel=706&start=live"
+    assert tune.live_link("706", "abc") == "plezy://live?channel=706&start=live&server=abc"
     assert tune.play_link("abc", "55") == "plezy://play?server=abc&id=55"
     assert search.fts_query("what's on: the Illini game") == '"illini"*'
 

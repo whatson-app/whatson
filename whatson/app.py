@@ -17,13 +17,14 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import ai_settings, config, db, devices, plex_auth, safe_http, search, tune
+from . import ai_settings, config, db, devices, plex_auth, safe_http, search, source_routes, tune
 from .ai import Interpreter
 from .devices.androidtv import AndroidTVDriver, NotPaired
 from .devices.base import PairingError, WrongCode
 from .ingest import Refresher
+from .sources.jellyfin import JellyfinError
 from .sources.plex import PlexClient, PlexNotConnected
-from .routes import router as api_router
+from .routes import _cache as route_cache, router as api_router
 from .arr_routes import router as arr_router
 from .plex_routes import renew_loop, router as plex_router
 from .remote_routes import router as remote_router
@@ -44,13 +45,14 @@ async def lifespan(app: FastAPI):
     pc = plex_auth.load(state.conn)
     state.plex = PlexClient(pc.url, pc.token, s.client_name, http=safe_http.client(timeout=60),
                             client_id=plex_auth.client_id(state.conn))
-    if not pc.configured:
-        log.warning("No Plex server yet: open WhatsOn → Settings → Plex to sign in")
-    state.refresher = Refresher(s, state.conn, state.plex)
     state.interpreter = ai_settings.interpreter(ai_settings.load(state.conn))
     state.drivers = {"androidtv": AndroidTVDriver(s.cert_dir, s.client_name)}
     state.http = httpx.AsyncClient(timeout=20)
     state.lan_http = safe_http.client(timeout=20)
+    state.source = source_routes.current()
+    if not state.source.configured:
+        log.warning("No server yet: open WhatsOn → Settings → Source to connect Plex or Jellyfin")
+    state.refresher = Refresher(s, state.conn, state.source)
     state.trakt = Trakt(state.conn, state.http)
     tasks = [asyncio.create_task(state.refresher.run_forever()), asyncio.create_task(_trakt_loop()),
              asyncio.create_task(renew_loop()), asyncio.create_task(_drop_idle_loop())]
@@ -85,11 +87,17 @@ app.include_router(api_router)
 app.include_router(arr_router)
 app.include_router(plex_router)
 app.include_router(remote_router)
+app.include_router(source_routes.router)
 
 
 @app.exception_handler(PlexNotConnected)
 async def plex_not_connected(request: Request, exc: PlexNotConnected):
     return JSONResponse({"detail": {"code": "plex_not_connected", "message": str(exc)}}, status_code=503)
+
+
+@app.exception_handler(JellyfinError)
+async def jellyfin_failed(request: Request, exc: JellyfinError):
+    return JSONResponse({"detail": {"code": "jellyfin_error", "message": str(exc)}}, status_code=502)
 
 ALLOWED_HOSTS = {h.strip().lower() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()}
 
@@ -138,8 +146,8 @@ async def status():
     c = state.conn
     count = lambda t: c.execute(f"SELECT count(*) FROM {t}").fetchone()[0]  # noqa: E731
     return {"channels": count("channels"), "airings": count("airings"), "library": count("library"),
-            "games": count("games"), "ai": state.interpreter.enabled, "plex": state.plex.configured,
-            "ai_provider": state.interpreter.provider if state.interpreter.enabled else None,
+            "games": count("games"), "ai": state.interpreter.enabled, "connected": state.source.configured,
+            "source": state.source.name, "ai_provider": state.interpreter.provider if state.interpreter.enabled else None,
             "guide_refreshed": int(db.get_meta(c, "guide_refreshed", "0")),
             "library_refreshed": int(db.get_meta(c, "library_refreshed", "0"))}
 
@@ -176,13 +184,11 @@ async def sports(hours: int = 4):
 
 
 @app.get("/api/thumb")
-async def thumb(path: str = Query(..., pattern=r"^/library/metadata/\d+/(thumb|art)/\d+$"),
-                width: int = Query(300, ge=50, le=1000)):
-    """Proxy library artwork so the Plex token never reaches the browser. Only exact Plex artwork
-    paths are accepted, so this can't be used to reach anything else on the server."""
-    r = await state.plex.get_raw("/photo/:/transcode",
-                                 {"url": path, "width": width, "height": int(width * 1.5), "minSize": 1})
-    if r.status_code != 200:
+async def thumb(path: str, width: int = Query(300, ge=50, le=1000)):
+    """Proxy library artwork so the server's token never reaches the browser. Each source accepts only
+    its exact artwork paths, so this can't be used to reach anything else on the server."""
+    r = await state.source.thumb(path, width)
+    if r is None or r.status_code != 200:
         raise HTTPException(404)
     return Response(r.content, media_type=r.headers.get("content-type", "image/jpeg"),
                     headers={"Cache-Control": "max-age=86400"})
@@ -376,7 +382,7 @@ async def test_tv(device_id: int, body: TestIn):
     d = _device(device_id)
     drv = _driver(d)
     if not body.force:
-        avail = await tune.check_busy(drv, state.plex, d)
+        avail = await tune.check_busy(drv, state.source, d)
         if avail.busy:
             raise HTTPException(409, {"code": "busy", "message": avail.reason})
     try:
@@ -398,7 +404,7 @@ async def test_tv(device_id: int, body: TestIn):
 @app.get("/api/devices/{device_id}/status")
 async def tv_status(device_id: int):
     d = _device(device_id)
-    avail = await tune.check_busy(_driver(d), state.plex, d)
+    avail = await tune.check_busy(_driver(d), state.source, d)
     st = avail.status
     return {"busy": avail.busy, "reason": avail.reason, "reachable": st.reachable if st else False,
             "is_on": st.is_on if st else None, "current_app": st.current_app if st else ""}
@@ -410,13 +416,14 @@ async def do_tune(body: TuneIn):
     drv = _driver(d)
     server = db.get_meta(state.conn, "machine_id")
     if body.channel:
-        link = tune.live_link(body.channel)
+        # Plezy pools the channels of every server it's signed in to unless told which one.
+        link = tune.live_link(body.channel, server)
     elif body.rating_key:
         link = tune.play_link(server, body.rating_key)
     else:
         raise HTTPException(400, "Give a channel or a rating_key")
     if not body.force:
-        avail = await tune.check_busy(drv, state.plex, d)
+        avail = await tune.check_busy(drv, state.source, d)
         if avail.busy:
             raise HTTPException(409, {"code": "busy", "message": avail.reason})
     try:
@@ -431,4 +438,6 @@ async def do_tune(body: TuneIn):
                                  (body.channel, body.channel)).fetchone()
         if row:
             state.last_tune[d["id"]] = (row["id"], time.time())
-    return {"ok": True, "link": link, "device": d["name"]}
+    route_cache.pop(f"now:{d['id']}", None)
+    # Plezy can only play from Jellyfin once it's signed in there, and a link can't report that it failed.
+    return {"ok": True, "link": link, "device": d["name"], "confirm": state.source.name == "jellyfin"}

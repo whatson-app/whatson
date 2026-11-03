@@ -84,10 +84,10 @@ document.addEventListener("click", (ev) => {
 $("#open-settings").addEventListener("click", () => openSettings("tvs"));
 $("#settings").addEventListener("close", async () => {
   const st = await fetch("/api/status").then((r) => r.json()).catch(() => ({}));
-  const wasOff = !$("#connect-plex").hidden;
-  $("#connect-plex").hidden = st.plex !== false;
+  const wasOff = !$("#connect-source").hidden;
+  $("#connect-source").hidden = st.connected !== false;
   if (st.ai) $("#global-search input").placeholder = "Search, or ask anything";
-  if (wasOff && st.plex) route();
+  if (wasOff && st.connected) route();
 });
 window.addEventListener("hashchange", route);
 // The guide switches between grid and list at the phone breakpoint.
@@ -107,9 +107,9 @@ initSettings();
   await loadDevices().catch(() => {});
   refreshNow();
   route();
-  // First run: nothing works until a Plex server is connected.
+  // First run: nothing works until a server is connected.
   const st = await fetch("/api/status").then((r) => r.json()).catch(() => ({}));
   if (st.ai) $("#global-search input").placeholder = "Search, or ask anything";
-  $("#connect-plex").hidden = st.plex !== false;
-  if (st.plex === false) openSettings("plex");
+  $("#connect-source").hidden = st.connected !== false;
+  if (st.connected === false) openSettings("source");
 })();

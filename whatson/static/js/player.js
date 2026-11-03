@@ -52,11 +52,23 @@ export async function tuneTo(target, btn) {
     }
     toast(`Starting on ${r.device}…`);
     setTimeout(refreshNow, 6000);
+    if (r.confirm) confirmStarted(deviceId, r.device, target);
   } catch (e) {
     toast(e.message);
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+
+// Live TV can take 15 seconds to show as playing, so don't call it a failure sooner than this.
+async function confirmStarted(deviceId, name, target) {
+  for (let i = 0; i < 5; i++) {
+    await new Promise((done) => setTimeout(done, 5000));
+    const n = await api(`/api/devices/${deviceId}/now`).catch(() => null);
+    if (!n) return;
+    if (target.channel ? n.channel?.vcn === target.channel : [n.rating_key, n.show_key].includes(target.rating_key)) return;
+  }
+  toast(`Couldn't confirm it started on ${name}. Check Plezy there is signed in to Jellyfin, and that the TV is linked in Settings → TVs.`, 12000);
 }
 
 function nowHtml(n) {

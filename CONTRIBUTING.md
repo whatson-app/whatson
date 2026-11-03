@@ -34,7 +34,7 @@ DATA_DIR=./data .venv/bin/uvicorn whatson.app:app --reload --port 8430
 .venv/bin/pytest
 ```
 
-Open `http://localhost:8430`, then connect Plex in ⚙ → Plex. The front end is plain JavaScript modules
+Open `http://localhost:8430`, then connect a server in ⚙ → Source. The front end is plain JavaScript modules
 with no build step, so reloading the page picks up changes.
 
 ## Where things are
@@ -43,10 +43,10 @@ with no build step, so reloading the page picks up changes.
 |---|---|
 | `whatson/app.py` | Start-up, request checks, TV pairing and search routes |
 | `whatson/routes.py` | Most of the API: guide, library, sports, suggestions |
-| `whatson/remote_routes.py`, `arr_routes.py`, `plex_routes.py` | Remote tab and Jellyfin, Radarr/Sonarr, Plex sign-in |
+| `whatson/remote_routes.py`, `arr_routes.py`, `plex_routes.py`, `source_routes.py` | Remote tab and Jellyfin, Radarr/Sonarr, Plex sign-in, choosing the server |
 | `whatson/search.py`, `ai.py`, `suggest.py` | Search filters and queries, AI reading of questions, suggestion rows |
 | `whatson/ingest.py`, `db.py` | Background refresh, SQLite storage |
-| `whatson/sources/` | Plex, ESPN and Jellyfin clients |
+| `whatson/sources/` | Plex, ESPN and Jellyfin clients; `base.py` is what a media server has to provide |
 | `whatson/devices/` | TV drivers |
 | `whatson/apps.py` | Apps the Remote tab knows about |
 | `whatson/safe_http.py` | The rules for addresses people type in Settings |

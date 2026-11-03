@@ -77,10 +77,10 @@ async function loadPage() {
 async function loadForYou(kind) {
   try {
     const s = await api("/api/suggest/library");
-    const upNext = s.up_next.filter((u) => kind === "show" ? u.kind === "show" : u.kind === "movie" || s.up_next_source === "plex");
+    const upNext = s.up_next.filter((u) => kind === "show" ? u.kind === "show" : u.kind === "movie" || s.up_next_source !== "trakt");
     const scroll = (items) => `<div class="hscroll">${items.map((it) => posterCard(
       { ...it, rating_key: it.rating_key }, { label: it.label, reason: it.ai ? it.reason : "" })).join("")}</div>`;
-    let html = row("Up next", upNext.length ? scroll(upNext) : "", { badge: "Plex" });
+    let html = row("Up next", upNext.length ? scroll(upNext) : "", { badge: s.source_label });
     if (kind === "movie" && s.picks.length) {
       const [top, ...rest] = s.picks;
       html += row(s.ai ? "Tonight's pick" : "Worth a watch", `

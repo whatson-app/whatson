@@ -9,7 +9,7 @@ import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from . import ai, ai_settings, apps, arr, db, devices, search, suggest
+from . import ai, ai_settings, apps, arr, db, devices, search, suggest, tune
 from .sources import espn
 from .state import state
 from .trakt import TraktError
@@ -109,15 +109,14 @@ async def now_playing(device_id: int):
     if (hit := cached(key, 8)) is not None:
         return hit
     d = _device(device_id)
-    sessions = [s for s in await state.plex.sessions()
-                if s.player_address == d["host"] or s.player_title.lower() == (d["plex_player"] or d["name"]).lower()]
+    sessions = [s for s in await state.source.playing() if tune.on_tv(s, d)]
     if sessions:
         s = sessions[0]
         out = {"state": s.state, "kind": s.kind, "app": s.product, "title": s.title, "subtitle": s.episode,
                "thumb": s.thumb, "offset": s.offset, "duration": s.duration, "rating_key": s.rating_key,
                "show_key": s.show_key}
         if s.live:
-            channel = _live_channel(device_id, s.title)
+            channel = s.channel_id or _live_channel(device_id, s.title)
             row = state.conn.execute(
                 """SELECT a.title, a.subtitle, a.begins, a.ends, c.vcn, c.title AS ch, c.thumb AS ch_thumb,
                           g.away, g.home, g.away_score, g.home_score, g.detail, g.state AS gstate
@@ -295,31 +294,19 @@ async def library_genres(kind: str = "movie"):
 
 @router.get("/library/item/{rating_key}")
 async def library_detail(rating_key: str):
-    if not rating_key.isdigit():
+    if not state.source.valid_id(rating_key):
         raise HTTPException(400, "Bad id")
-    m = await state.plex.metadata(rating_key)
-    if not m:
+    out = await state.source.item(rating_key)
+    if not out:
         raise HTTPException(404, "Not in the library")
-    out = {"rating_key": rating_key, "kind": m.get("type"), "title": m.get("title"), "year": m.get("year"),
-           "summary": m.get("summary", ""), "duration": m.get("duration"), "content_rating": m.get("contentRating", ""),
-           "audience_rating": m.get("audienceRating"), "thumb": m.get("thumb", ""), "art": m.get("art", ""),
-           "genres": [g.get("tag") for g in m.get("Genre", [])], "cast": [r.get("tag") for r in m.get("Role", [])][:8],
-           "studio": m.get("studio", ""), "view_offset": m.get("viewOffset"), "watched": bool(m.get("viewCount"))}
-    if m.get("type") == "show":
-        out["seasons"] = [{"rating_key": str(s["ratingKey"]), "index": s.get("index"), "title": s.get("title"),
-                           "thumb": s.get("thumb", ""), "episodes": s.get("leafCount"),
-                           "watched": s.get("viewedLeafCount")} for s in await state.plex.children(rating_key)]
     return out
 
 
 @router.get("/library/season/{rating_key}")
 async def library_season(rating_key: str):
-    if not rating_key.isdigit():
+    if not state.source.valid_id(rating_key):
         raise HTTPException(400, "Bad id")
-    return [{"rating_key": str(e["ratingKey"]), "index": e.get("index"), "title": e.get("title"),
-             "summary": e.get("summary", ""), "duration": e.get("duration"), "thumb": e.get("thumb", ""),
-             "watched": bool(e.get("viewCount")), "view_offset": e.get("viewOffset"),
-             "aired": e.get("originallyAvailableAt")} for e in await state.plex.children(rating_key)]
+    return await state.source.episodes(rating_key)
 
 
 # --- Sports -----------------------------------------------------------------------------------
@@ -551,19 +538,11 @@ async def suggest_library():
     up_next = suggest.library_up_next(state.conn, cache)
     source = "trakt"
     if not up_next:
-        source = "plex"
-        for m in (await state.plex.on_deck())[:12]:
-            ep = m.get("type") == "episode"
-            up_next.append({"type": "library", "kind": "show" if ep else "movie",
-                            "rating_key": str(m.get("grandparentRatingKey") or m.get("ratingKey")),
-                            "play_key": str(m.get("ratingKey")),
-                            "title": m.get("grandparentTitle") if ep else m.get("title"),
-                            "thumb": m.get("grandparentThumb") if ep else m.get("thumb", ""),
-                            "label": (f"S{int(m.get('parentIndex') or 0):02d}E{int(m.get('index') or 0):02d} {m.get('title', '')}"
-                                      if ep else "Continue watching"), "reason": "On deck in Plex"})
+        source = state.source.name
+        up_next = await state.source.up_next()
     pool = suggest.library_candidates(state.conn, cache)
     picks = await suggest.ai_rank(state.interpreter, "library", pool, 4, suggest.taste_context(cache))
-    return {"up_next": up_next, "up_next_source": source, "picks": picks,
+    return {"up_next": up_next, "up_next_source": source, "source_label": state.source.label, "picks": picks,
             "missing": suggest.watchlist_missing(state.conn, cache), "seerr_url": db.get_meta(state.conn, "seerr_url"),
             "get": {k: arr.load(state.conn, k).configured for k in arr.KINDS},
             "ai": state.interpreter.enabled, "trakt": state.trakt.connected}
