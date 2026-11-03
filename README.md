@@ -87,6 +87,10 @@ phone app uses); no developer mode or ADB is needed.
 
 The container uses host networking so it can reach TVs on your LAN.
 
+**On Unraid,** use the Docker template: copy [`deploy/unraid/whatson.xml`](deploy/unraid/whatson.xml) to
+`/boot/config/plugins/dockerMan/templates-user/my-whatson.xml`, then go to Docker → Add Container and pick
+**whatson**. The container then shows like any other Unraid app (update check, autostart, Edit), not as "3rd Party".
+
 ## Connecting to Plex
 
 Three ways, in the order WhatsOn prefers them:
