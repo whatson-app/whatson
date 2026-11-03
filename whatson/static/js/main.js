@@ -2,7 +2,7 @@
 // #/library[/movie|show|downloads], #/library/show/<id>, #/sports[/league], #/remote, #/search (results).
 // The last section used is remembered.
 
-import { $, $$, closeSheet, store, toast } from "./core.js";
+import { $, $$, applyTheme, closeSheet, store, toast } from "./core.js";
 import { initPlayer, loadDevices, refreshNow, setPairHandler, setSettingsHandler, tuneTo } from "./player.js";
 import { goToChannel, renderLive, showAiring, toggleFav } from "./live.js";
 import { renderLibrary, renderShow, showMovie } from "./library.js";
@@ -98,6 +98,7 @@ window.addEventListener("resize", () => {
   wasPhone = phone;
 });
 
+applyTheme(store.get("theme"));
 setPairHandler((d) => wizard.open({ host: d.host, name: d.name, kind: d.kind, step: "pair" }));
 setSettingsHandler(openSettings);
 initPlayer();
