@@ -9,6 +9,18 @@ it tunes the channel or starts the movie there.
 
 ## What it does
 
+![The Live TV guide: a search bar, picks for what's on now, and a channel grid](docs/screenshots/live.png)
+
+| Library | Show page |
+|---|---|
+| ![Up next and a poster grid of TV shows](docs/screenshots/library.png) | ![A show's seasons and episodes, each with a play button](docs/screenshots/show.png) |
+
+| Sports | Remote | On a phone |
+|---|---|---|
+| ![Followed teams with live scores and a close game worth switching to](docs/screenshots/sports.png) | ![A TV remote with a d-pad, playback, volume and channel buttons](docs/screenshots/remote.png) | ![The library at phone width, in light mode](docs/screenshots/phone-light.jpg) |
+
+The titles, channels, teams and artwork in these screenshots are made up for the demo.
+
 One search bar across everything (live TV, games, your library, titles you could get), four sections,
 and a **now playing** bar for the TV you picked (what's on it, progress, pause and stop).
 
