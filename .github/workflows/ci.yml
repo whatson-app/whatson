@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,10 +21,37 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev,anthropic,openai]"
-      - run: pytest -q
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Every check (scripts/check.py, the same command contributors run)
+        run: python scripts/check.py
 
-  image:
+  privacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: No private addresses, personal emails or real home data
+        run: python scripts/check_public.py
+      # The gitleaks CLI (MIT) rather than gitleaks-action, which needs a paid licence key for organisation repos.
+      - name: No secrets (gitleaks, whole history)
+        run: docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/repo" zricethezav/gitleaks:v8.28.0 git /repo --redact --no-banner -v
+
+  docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - run: docker build -t whatson:ci .
+      - name: The image starts, answers /health and refuses a change without the header
+        run: |
+          docker run -d --name whatson -p 8430:8430 whatson:ci
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8430/health && break; sleep 2; done
+          curl -fsS http://127.0.0.1:8430/health
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8430/api/tune)" = 403
+      - if: always()
+        run: docker logs whatson || true

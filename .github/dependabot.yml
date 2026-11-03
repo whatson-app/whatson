@@ -1,6 +1,21 @@
 version: 2
 updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule: {interval: weekly}
+    ignore:
+      # Pinned below 0.4 in pyproject.toml; moving to a new minor of this 0.x library is its own change, tried on a TV.
+      - dependency-name: androidtvremote2
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: weekly
+    schedule: {interval: monthly}
+    groups:
+      actions: {patterns: ["*"]}
+  - package-ecosystem: docker
+    directory: /
+    schedule: {interval: monthly}
+    ignore:
+      # A new Python minor needs its wheels published first; move the image by hand.
+      - dependency-name: python
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]

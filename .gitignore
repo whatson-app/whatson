@@ -4,3 +4,4 @@ __pycache__/
 *.egg-info/
 .env
 .pytest_cache/
+.private-denylist

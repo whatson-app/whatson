@@ -1,0 +1,21 @@
+* @jpittelkow
+
+# Security-critical: keys, addresses people type, request checks, taking over a TV, Radarr and Sonarr, and the checks
+# themselves. Changes here get a closer review (CONTRIBUTING.md → Pull requests).
+/whatson/app.py           @jpittelkow
+/whatson/safe_http.py     @jpittelkow
+/whatson/tune.py          @jpittelkow
+/whatson/arr.py           @jpittelkow
+/whatson/arr_routes.py    @jpittelkow
+/whatson/plex_auth.py     @jpittelkow
+/whatson/plex_routes.py   @jpittelkow
+/whatson/remote_routes.py @jpittelkow
+/whatson/source_routes.py @jpittelkow
+/whatson/ai_settings.py   @jpittelkow
+/tests/test_guards.py     @jpittelkow
+/scripts/                 @jpittelkow
+/.github/                 @jpittelkow
+/AGENTS.md                @jpittelkow
+/CLAUDE.md                @jpittelkow
+/*/AGENTS.md              @jpittelkow
+/*/CLAUDE.md              @jpittelkow

@@ -1,0 +1,8 @@
+# The default rules, minus the made-up keys the tests use to prove a key stays with its address.
+# List exact values only: never allow a whole file or folder, or a real key could hide there.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Made-up keys in tests"
+regexes = ['''^(?:env-key-123456789|saved-key-123456789|sk-env-1234567890)$''']
