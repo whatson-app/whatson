@@ -1,0 +1,31 @@
+[project]
+name = "whatson"
+version = "0.1.0"
+description = "Self-hosted search for what's on Live TV and in your Plex library, with one-tap tuning on your TVs."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "httpx>=0.27",
+    "androidtvremote2>=0.3,<0.4",
+    "zeroconf>=0.130",
+    "cryptography>=42",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.70"]
+openai = ["openai>=1.50"]
+dev = ["pytest>=8", "pytest-asyncio>=0.24"]
+
+[tool.setuptools.packages.find]
+include = ["whatson*"]
+
+[tool.setuptools.package-data]
+whatson = ["static/*", "static/js/*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+asyncio_default_fixture_loop_scope = "function"

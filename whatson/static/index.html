@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WhatsOn</title>
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e5532d'/%3E%3Cpath d='M12 9.5v13l11-6.5z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#/">What<span>s</span>On</a>
+    <div id="now" class="now" hidden aria-live="polite"></div>
+    <label class="tv-pick" title="TV to tune">
+      <span class="tv-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="m8 3 4 4 4-4"/></svg></span>
+      <select id="tv" aria-label="TV to tune"></select>
+    </label>
+    <button id="open-settings" class="icon-btn" aria-label="Settings">⚙</button>
+  </header>
+
+  <nav class="nav1" aria-label="Sections">
+    <a href="#/live" data-nav="live"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="m8 3 4 4 4-4"/></svg></span>Live TV</a>
+    <a href="#/library" data-nav="library"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M16 4v16M3 9h5M3 15h5M16 9h5M16 15h5"/></svg></span>Library</a>
+    <a href="#/sports" data-nav="sports"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 14v4M8 20h8"/></svg></span>Sports</a>
+    <a href="#/remote" data-nav="remote"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="3"/><circle cx="12" cy="8" r="2"/><path d="M10 14h.01M14 14h.01M10 18h.01M14 18h.01"/></svg></span>Remote</a>
+  </nav>
+
+  <button id="connect-plex" class="msg-banner" data-settings="plex" hidden>Connect your Plex server to see the guide and your library</button>
+  <div id="global-search"></div>
+  <main id="view"></main>
+
+  <dialog id="sheet" class="sheet">
+    <form method="dialog" class="dlg-head"><span></span><button class="icon-btn" aria-label="Close">✕</button></form>
+    <div id="sheet-body"></div>
+  </dialog>
+
+  <dialog id="settings">
+    <form method="dialog" class="dlg-head"><h2>Settings</h2><button class="icon-btn" aria-label="Close">✕</button></form>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="plex" aria-selected="false">Plex</button>
+      <button role="tab" data-tab="tvs" aria-selected="true">TVs</button>
+      <button role="tab" data-tab="sports" aria-selected="false">Sports</button>
+      <button role="tab" data-tab="ai" aria-selected="false">AI search</button>
+      <button role="tab" data-tab="downloads" aria-selected="false">Downloads</button>
+      <button role="tab" data-tab="jellyfin" aria-selected="false">Jellyfin</button>
+    </div>
+
+    <section data-panel="tvs">
+      <div id="device-list"></div>
+      <button id="add-tv" class="primary wide">+ Add a TV</button>
+      <p id="status-line" class="hint"></p>
+    </section>
+
+    <section data-panel="plex" hidden>
+      <div id="px-connected" class="card" hidden>
+        <div class="row"><b id="px-server"></b><span class="hint" id="px-how"></span></div>
+        <div class="row"><button id="px-switch">Change server</button><button id="px-disconnect">Disconnect</button></div>
+      </div>
+      <div id="px-setup">
+        <p class="hint">WhatsOn reads your Plex server's Live TV guide and library. Sign in to choose a server.</p>
+        <button id="px-signin" class="primary wide">Sign in with Plex</button>
+      </div>
+      <div id="px-flow" class="card" hidden></div>
+      <details id="px-manual-box">
+        <summary>Paste a token instead</summary>
+        <p class="hint">In Plex Web, open any movie, choose Get Info → View XML, and copy the <code>X-Plex-Token</code>
+          value from the address bar. A pasted token keeps working until you sign out of Plex everywhere.</p>
+        <form id="px-manual" class="stack">
+          <label>Server address <input name="url" autocomplete="off" placeholder="http://192.168.1.10:32400"></label>
+          <label>Token <input name="token" type="password" autocomplete="off"></label>
+          <div class="row"><button type="submit" class="primary">Connect</button></div>
+        </form>
+      </details>
+      <p class="hint">The sign-in shows up as “WhatsOn” under Plex → Settings → Authorized Devices, where you can remove it.
+        Tokens stay on the WhatsOn server and never reach this browser.</p>
+    </section>
+
+    <section data-panel="sports" hidden>
+      <h3>Leagues</h3>
+      <p class="hint">Followed leagues get a tab in Sports and their games pinned on top.</p>
+      <div id="sp-leagues" class="checks"></div>
+      <h3>Your teams</h3>
+      <div id="sp-my-teams" class="chips"></div>
+      <div class="row team-search">
+        <select id="sp-team-league" aria-label="League"></select>
+        <input id="sp-team-q" placeholder="Find a team" autocomplete="off">
+      </div>
+      <div id="sp-team-results" class="choice-list"></div>
+    </section>
+
+    <section data-panel="ai" hidden>
+      <p class="hint">Optional. With a provider set, questions like “a funny movie on tonight” are turned into
+        search filters, and suggestions get a reason. Without one, everything still works.</p>
+      <form id="ai-form" class="stack">
+        <label>Provider
+          <select name="provider">
+            <option value="none">Off (keyword search only)</option>
+            <option value="anthropic">Claude (Anthropic)</option>
+            <option value="openai">OpenAI or compatible (LM Studio, Ollama…)</option>
+            <option value="openrouter">OpenRouter</option>
+          </select>
+        </label>
+        <div data-ai-fields class="stack">
+          <label id="ai-base-url">Server URL
+            <input name="base_url" autocomplete="off" placeholder="Empty = OpenAI. Local: http://192.168.1.20:1234/v1">
+            <span class="hint">For LM Studio, Ollama or another OpenAI-compatible server. A key only goes to the server it was saved for.</span>
+          </label>
+          <label>API key <span id="ai-key-state" class="hint"></span>
+            <input name="key" type="password" autocomplete="off" placeholder="Paste a key to save or replace it">
+          </label>
+          <button type="button" id="ai-clear-key" class="link-btn" hidden>Remove saved key</button>
+          <label>Model
+            <div class="row model-row">
+              <select name="model_pick" aria-label="Model"></select>
+              <button type="button" id="ai-load-models">Load models</button>
+            </div>
+            <input name="model" autocomplete="off" placeholder="Model id" hidden>
+          </label>
+        </div>
+        <div class="row">
+          <span id="ai-active" class="hint"></span>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+      <form id="ai-test" class="stack">
+        <label>Try a question
+          <input name="query" value="is the bears game on tonight?">
+        </label>
+        <div class="row"><button type="submit">Test</button></div>
+        <pre id="ai-result" class="result" hidden></pre>
+      </form>
+      <p class="hint">Keys are kept on the WhatsOn server and are never shown again in full.</p>
+    </section>
+
+    <section data-panel="downloads" hidden>
+      <p class="hint">Connect Radarr and Sonarr to find movies and shows you don't have and add them.
+        Library searches then show a “Get it” row, and Library → Downloads follows them until they reach Plex.
+        WhatsOn only adds and searches; it never changes or deletes anything in Radarr or Sonarr.</p>
+      <label class="toggle"><input type="checkbox" id="dl-allow"> Allow adding from WhatsOn</label>
+      <p class="hint">While this is on, anyone who can open WhatsOn can add titles (they start downloading).</p>
+      <div id="dl-movie"></div>
+      <div id="dl-show"></div>
+    </section>
+
+    <section data-panel="jellyfin" hidden>
+      <p class="hint">Optional. With a Jellyfin server connected, the Remote tab can control Jellyfin apps playing on
+        your TVs directly (seek bar, pause, next), including third-party apps that allow remote control.</p>
+      <p id="jf-status" class="msg" role="status"></p>
+      <form id="jf-form" class="stack">
+        <label>Server address <input name="url" autocomplete="off" placeholder="http://192.168.1.10:8096"></label>
+        <label>API key <input name="key" type="password" autocomplete="off" placeholder="Jellyfin → Dashboard → API Keys"></label>
+        <div class="row"><button type="button" id="jf-forget" hidden>Disconnect</button><button type="submit" class="primary">Connect</button></div>
+      </form>
+    </section>
+  </dialog>
+
+  <dialog id="wizard" aria-labelledby="wz-title">
+    <form method="dialog" class="dlg-head"><h2 id="wz-title">Add a TV</h2><button class="icon-btn" aria-label="Close">✕</button></form>
+    <ol class="steps" aria-hidden="true"><li>Type</li><li>Find</li><li>Pair</li><li>Test</li><li>Name</li></ol>
+
+    <section data-wz="type">
+      <p>What kind of TV or streaming box is it?</p>
+      <div id="wz-types" class="choice-list"></div>
+    </section>
+
+    <section data-wz="find" hidden>
+      <p>Pick your TV. It needs to be on and on the same network.</p>
+      <div id="wz-found" class="choice-list"></div>
+      <div class="row"><button type="button" id="wz-rescan">Scan again</button></div>
+      <details id="wz-manual">
+        <summary>Not listed? Enter its IP address</summary>
+        <form id="wz-manual-form" class="row">
+          <input name="host" placeholder="192.168.1.50" inputmode="decimal" required>
+          <button type="submit" class="primary">Next</button>
+        </form>
+        <p class="hint">On the TV: Settings → System → About → Network (or your router's device list).</p>
+      </details>
+    </section>
+
+    <section data-wz="pair" hidden>
+      <p id="wz-pair-lead">A code is showing on <b class="wz-tv-name"></b>. Type it here.</p>
+      <form id="wz-code-form" class="code-row">
+        <input name="code" class="code" maxlength="6" autocomplete="one-time-code" autocapitalize="characters"
+               spellcheck="false" placeholder="A1B2C3" aria-label="Pairing code" required>
+        <button type="submit" class="primary">Pair</button>
+      </form>
+      <p id="wz-pair-msg" class="msg" role="status"></p>
+      <div class="row">
+        <button type="button" id="wz-back" class="back">← Back</button>
+        <button type="button" id="wz-new-code">No code on screen? Show a new one</button>
+      </div>
+    </section>
+
+    <section data-wz="test" hidden>
+      <p><b class="wz-tv-name"></b> is paired. Now check Plezy is installed and signed in: this opens Plezy on the TV.</p>
+      <p id="wz-test-msg" class="msg" role="status"></p>
+      <div class="row">
+        <button type="button" id="wz-skip-test">Skip</button>
+        <button type="button" id="wz-run-test" class="primary">Open Plezy on the TV</button>
+      </div>
+    </section>
+
+    <section data-wz="name" hidden>
+      <form id="wz-name-form" class="stack">
+        <label>What should we call it?
+          <input name="name" required>
+        </label>
+        <div class="row"><button type="submit" class="primary">Done</button></div>
+      </form>
+    </section>
+  </dialog>
+
+  <dialog id="confirm">
+    <p id="confirm-text"></p>
+    <form method="dialog" class="row">
+      <button value="cancel">Cancel</button>
+      <button value="ok" class="primary" id="confirm-ok">Take over</button>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

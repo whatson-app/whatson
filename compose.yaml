@@ -1,0 +1,11 @@
+services:
+  whatson:
+    build: .
+    container_name: whatson
+    restart: unless-stopped
+    # Host networking so the container can reach TVs on the LAN (the Android TV Remote
+    # protocol talks to each TV directly on ports 6466/6467).
+    network_mode: host
+    env_file: .env
+    volumes:
+      - ./data:/data
