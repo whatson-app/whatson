@@ -9,6 +9,17 @@ export const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } },
 };
 
+/** "light", "dark", or anything else to follow the device. index.html applies the saved one before first paint. */
+export function applyTheme(theme) {
+  const forced = theme === "light" || theme === "dark";
+  if (forced) document.documentElement.dataset.theme = theme;
+  else delete document.documentElement.dataset.theme;
+  const bars = { light: "#f6f7f9", dark: "#0f1115" };
+  for (const m of $$('meta[name="theme-color"]')) {
+    m.content = bars[forced ? theme : m.media.includes("dark") ? "dark" : "light"];
+  }
+}
+
 export async function api(path, opts = {}) {
   const res = await fetch(path, {
     ...opts,

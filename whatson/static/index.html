@@ -6,7 +6,8 @@
   <title>WhatsOn</title>
   <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e5532d'/%3E%3Cpath d='M12 9.5v13l11-6.5z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314161a'/%3E%3Cpath d='M11.5 5.5 16 10l4.5-4.5' fill='none' stroke='%23ff6a3d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='5' y='10' width='22' height='17' rx='3.5' fill='%23ff6a3d'/%3E%3Crect x='8.5' y='13.5' width='15' height='10' rx='1.5' fill='%2314161a'/%3E%3C/svg%3E">
+  <script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -46,6 +47,7 @@
       <button role="tab" data-tab="ai" aria-selected="false">AI search</button>
       <button role="tab" data-tab="downloads" aria-selected="false">Downloads</button>
       <button role="tab" data-tab="jellyfin" aria-selected="false">Jellyfin</button>
+      <button role="tab" data-tab="appearance" aria-selected="false">Appearance</button>
     </div>
 
     <section data-panel="tvs">
@@ -151,6 +153,16 @@
       <p class="hint">While this is on, anyone who can open WhatsOn can add titles (they start downloading).</p>
       <div id="dl-movie"></div>
       <div id="dl-show"></div>
+    </section>
+
+    <section data-panel="appearance" hidden>
+      <fieldset class="seg">
+        <legend>Theme</legend>
+        <label><input type="radio" name="theme" value="system"><span>Match device</span></label>
+        <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+        <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+      </fieldset>
+      <p class="hint">Saved in this browser, so each phone or computer can have its own.</p>
     </section>
 
     <section data-panel="jellyfin" hidden>

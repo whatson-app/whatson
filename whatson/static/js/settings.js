@@ -1,14 +1,14 @@
 // Settings: Source (Plex or Jellyfin), Plex (sign-in or pasted token), TVs (+ pairing wizard), Sports (leagues and teams),
 // AI search (+ model dropdown), Downloads (Radarr/Sonarr, in get.js), Jellyfin.
 
-import { $, $$, api, confirmDialog, debounce, esc, toast } from "./core.js";
+import { $, $$, api, applyTheme, confirmDialog, debounce, esc, store, toast } from "./core.js";
 import { devices, loadDevices, selectDevice } from "./player.js";
 import { initDownloadsSettings, loadDownloadsSettings } from "./get.js";
 
 export function openSettings(tab = "tvs") {
   for (const b of $$("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
   for (const p of $$("[data-panel]")) p.hidden = p.dataset.panel !== tab;
-  ({ source: loadSource, plex: loadPlex, tvs: renderDevices, ai: loadAI, sports: loadSportsSettings, downloads: loadDownloadsSettings, jellyfin: loadJellyfin })[tab]?.()?.catch?.((e) => toast(e.message));
+  ({ source: loadSource, plex: loadPlex, tvs: renderDevices, ai: loadAI, sports: loadSportsSettings, downloads: loadDownloadsSettings, jellyfin: loadJellyfin, appearance: loadAppearance })[tab]?.()?.catch?.((e) => toast(e.message));
   if (!$("#settings").open) $("#settings").showModal();
 }
 
@@ -220,6 +220,13 @@ async function followTeam(data) {
   teamCache = {};
   await loadSportsSettings();
   toast(`Following ${data.name}.`);
+}
+
+// --- Appearance ------------------------------------------------------------------------------------
+
+function loadAppearance() {
+  const theme = store.get("theme") || "system";
+  for (const r of $$('input[name="theme"]')) r.checked = r.value === theme;
 }
 
 // --- AI search --------------------------------------------------------------------------------------
@@ -454,6 +461,10 @@ export function initSettings() {
       api(`/api/follows?kind=team&league=${encodeURIComponent(b.dataset.league)}&team_id=${encodeURIComponent(b.dataset.unfollowTeam)}`, { method: "DELETE" })
         .then(() => { teamCache = {}; return loadSportsSettings(); }).catch((e) => toast(e.message));
     }
+  });
+  $('[data-panel="appearance"]').addEventListener("change", (ev) => {
+    store.set("theme", ev.target.value);
+    applyTheme(ev.target.value);
   });
   $("#add-tv").addEventListener("click", () => { $("#settings").close(); wizard.open(); });
   $("#device-list").addEventListener("change", (ev) => {
