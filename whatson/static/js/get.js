@@ -28,7 +28,7 @@ function stateLine(c) {
     not_added: `Not in ${app} yet.`,
     downloading: `Downloading: ${pct(c.progress)}${c.timeleft && c.timeleft !== "00:00:00" ? `, ${c.timeleft} left` : ""}${c.queued_episodes > 1 ? ` (${c.queued_episodes} episodes)` : ""}.`,
     importing: c.warning ? `Downloaded, but ${app} hasn't imported it.` : `Downloaded; ${app} is moving it into place.`,
-    imported: "Downloaded. It shows up here once Plex scans it.",
+    imported: "Downloaded. It shows up here once your server scans it.",
     not_released: `Not out yet. ${app} grabs it when it's released.`,
     missing: `In ${app}, but nothing has been downloaded yet.`,
   }[c.state] || "";

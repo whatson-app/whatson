@@ -10,7 +10,7 @@ import time
 from . import db
 from .config import Settings
 from .sources import espn
-from .sources.plex import Airing, Channel, LibraryItem, PlexClient
+from .sources.base import Airing, Channel, LibraryItem, Source
 
 log = logging.getLogger(__name__)
 GAME_SLOT_MIN_VCN = 1000  # Dispatcharr-style per-event channels; ranked after real networks
@@ -109,8 +109,8 @@ def write_library(conn: sqlite3.Connection, items: list[LibraryItem]) -> None:
 
 
 class Refresher:
-    def __init__(self, settings: Settings, conn: sqlite3.Connection, plex: PlexClient):
-        self.s, self.conn, self.plex = settings, conn, plex
+    def __init__(self, settings: Settings, conn: sqlite3.Connection, source: Source):
+        self.s, self.conn, self.source = settings, conn, source
         self.games: list[espn.Game] = []
         self.machine_id = ""
         self.last: dict[str, float] = {"games": 0.0, "guide": 0.0, "library": 0.0}
@@ -124,28 +124,32 @@ class Refresher:
             write_games(self.conn, games)
 
     async def refresh_guide(self) -> None:
-        epgs = await self.plex.epg_identifiers()
+        source = self.source
         now = int(time.time())
-        start, end = now - 3 * 3600, now + self.s.guide_hours * 3600
-        channels: list[Channel] = []
-        airings: list[Airing] = []
-        for epg in epgs:
-            channels += await self.plex.channels(epg)
-            airings += await self.plex.guide(epg, start, end)
+        channels, airings = await source.load_guide(now - 3 * 3600, now + self.s.guide_hours * 3600)
+        if source is not self.source:
+            return  # switched servers while this was loading: don't write the old one's guide over the new one
         write_guide(self.conn, channels, airings, self.games)
         db.set_meta(self.conn, "guide_refreshed", str(now))
         log.info("guide: %d channels, %d airings", len(channels), len(airings))
 
     async def refresh_library(self) -> None:
-        items = await self.plex.library()
+        source = self.source
+        items = await source.library()
+        if source is not self.source:
+            return
         write_library(self.conn, items)
         db.set_meta(self.conn, "library_refreshed", str(int(time.time())))
         log.info("library: %d items", len(items))
 
     def kick(self) -> None:
-        """The Plex server changed: look it up again and reload its guide and library now."""
+        """The server changed: look it up again and reload its guide and library now."""
         self.machine_id = ""
         self.last["guide"] = self.last["library"] = 0.0
+
+    def use(self, source: Source) -> None:
+        self.source = source
+        self.kick()
 
     async def run_forever(self) -> None:
         last = self.last
@@ -160,15 +164,18 @@ class Refresher:
                 g["league"] in leagues or espn.is_followed_game(teams, g["league"], g["home_id"], g["away_id"])
                 for g in self.conn.execute("SELECT league, home_id, away_id FROM games WHERE state = 'in'"))
             every["games"] = 30 if live_followed else self.s.sports_refresh_minutes * 60
-            if self.plex.configured and not self.machine_id:
+            source = self.source
+            if source.configured and not self.machine_id:
                 try:
-                    self.machine_id = await self.plex.machine_identifier()
-                    db.set_meta(self.conn, "machine_id", self.machine_id)
+                    server = await source.server_id()
+                    if source is self.source:
+                        self.machine_id = server
+                        db.set_meta(self.conn, "machine_id", server)
                 except Exception:
-                    log.warning("Plex server isn't answering; trying again shortly")
+                    log.warning("%s server isn't answering; trying again shortly", source.label)
             for name in ("games", "guide", "library"):  # games first, so the guide can link them
                 if name != "games" and not self.machine_id:
-                    continue  # no Plex server connected (yet)
+                    continue  # no server connected (yet)
                 if time.monotonic() - last[name] >= every[name] or not last[name]:
                     try:
                         await jobs[name]()

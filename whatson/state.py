@@ -11,6 +11,7 @@ class State:
     settings: config.Settings
     conn: sqlite3.Connection
     plex = None          # sources.plex.PlexClient
+    source = None        # sources.base.Source: the server the guide and library come from now
     refresher = None     # ingest.Refresher
     interpreter = None   # ai.Interpreter
     trakt = None         # trakt.Trakt
@@ -18,7 +19,7 @@ class State:
     lan_http = None      # safe_http.client() for addresses typed in Settings (Radarr, Sonarr)
     drivers: dict = {}
     # device id -> (channel id, time) of the last channel WhatsOn tuned there. Plex's Live TV sessions
-    # don't say which channel they're on, so now-playing uses this (checked against the title).
+    # don't say which channel they're on (Jellyfin's do), so now-playing uses this (checked against the title).
     last_tune: dict = {}
 
 

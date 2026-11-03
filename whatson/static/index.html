@@ -27,7 +27,7 @@
     <a href="#/remote" data-nav="remote"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="3"/><circle cx="12" cy="8" r="2"/><path d="M10 14h.01M14 14h.01M10 18h.01M14 18h.01"/></svg></span>Remote</a>
   </nav>
 
-  <button id="connect-plex" class="msg-banner" data-settings="plex" hidden>Connect your Plex server to see the guide and your library</button>
+  <button id="connect-source" class="msg-banner" data-settings="source" hidden>Connect your Plex or Jellyfin server to see the guide and your library</button>
   <div id="global-search"></div>
   <main id="view"></main>
 
@@ -39,6 +39,7 @@
   <dialog id="settings">
     <form method="dialog" class="dlg-head"><h2>Settings</h2><button class="icon-btn" aria-label="Close">✕</button></form>
     <div class="tabs" role="tablist">
+      <button role="tab" data-tab="source" aria-selected="false">Source</button>
       <button role="tab" data-tab="plex" aria-selected="false">Plex</button>
       <button role="tab" data-tab="tvs" aria-selected="true">TVs</button>
       <button role="tab" data-tab="sports" aria-selected="false">Sports</button>
@@ -51,6 +52,14 @@
       <div id="device-list"></div>
       <button id="add-tv" class="primary wide">+ Add a TV</button>
       <p id="status-line" class="hint"></p>
+    </section>
+
+    <section data-panel="source" hidden>
+      <p class="hint">Where the guide and library come from. Plezy plays from the same server, so it has to be signed in
+        to that server on each TV. WhatsOn reads one server at a time.</p>
+      <div id="src-choices" class="choice-list"></div>
+      <p class="hint">Switching reloads the guide and library from the other server and clears your favorite channels,
+        because the other server's channels are different.</p>
     </section>
 
     <section data-panel="plex" hidden>
@@ -136,7 +145,7 @@
 
     <section data-panel="downloads" hidden>
       <p class="hint">Connect Radarr and Sonarr to find movies and shows you don't have and add them.
-        Library searches then show a “Get it” row, and Library → Downloads follows them until they reach Plex.
+        Library searches then show a “Get it” row, and Library → Downloads follows them until they reach your library.
         WhatsOn only adds and searches; it never changes or deletes anything in Radarr or Sonarr.</p>
       <label class="toggle"><input type="checkbox" id="dl-allow"> Allow adding from WhatsOn</label>
       <p class="hint">While this is on, anyone who can open WhatsOn can add titles (they start downloading).</p>
@@ -145,14 +154,17 @@
     </section>
 
     <section data-panel="jellyfin" hidden>
-      <p class="hint">Optional. With a Jellyfin server connected, the Remote tab can control Jellyfin apps playing on
-        your TVs directly (seek bar, pause, next), including third-party apps that allow remote control.</p>
+      <p class="hint">Use Jellyfin for the guide and library (Settings → Source), or just let the Remote tab control
+        Jellyfin apps playing on your TVs (seek bar, pause, next), including third-party apps that allow remote control.</p>
       <p id="jf-status" class="msg" role="status"></p>
       <form id="jf-form" class="stack">
         <label>Server address <input name="url" autocomplete="off" placeholder="http://192.168.1.10:8096"></label>
         <label>API key <input name="key" type="password" autocomplete="off" placeholder="Jellyfin → Dashboard → API Keys"></label>
         <div class="row"><button type="button" id="jf-forget" hidden>Disconnect</button><button type="submit" class="primary">Connect</button></div>
       </form>
+      <label id="jf-user-box" hidden>Whose watched status and up next to show
+        <select id="jf-user"></select>
+      </label>
     </section>
   </dialog>
 

@@ -52,7 +52,7 @@ FILTER_SCHEMA = {
 
 FILTER_SYSTEM = """You turn a question about what to watch into search filters for a home TV app.
 The app searches two things: the Live TV guide (channels, airings, sports games with team names) and
-the person's Plex library (movies and shows they own).
+the person's media library (movies and shows they own).
 - scope: "guide" for live TV questions ("on now", "what channel", "tonight", games), "library" for
   things to watch from their collection, "all" when unclear.
 - text: the distinctive search words only. Expand team nicknames to the school or city as well

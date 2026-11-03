@@ -29,12 +29,12 @@ export async function api(path, opts = {}) {
   return data;
 }
 
-export function toast(msg) {
+export function toast(msg, ms = 3500) {
   const t = $("#toast");
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => t.classList.remove("show"), 3500);
+  toast.timer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
 export function confirmDialog(text, okLabel = "Take over") {

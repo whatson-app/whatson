@@ -8,9 +8,10 @@ import asyncio
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from . import apps, db, devices, tune
+from . import apps, db, devices, source_routes, tune
 from .arr_routes import _check_url
 from .devices.androidtv import NotPaired
+from .source_routes import jellyfin
 from .sources.jellyfin import Jellyfin, JellyfinError, JellyfinSession
 from .state import state
 
@@ -51,14 +52,17 @@ async def _do(device_id: int, d: dict, coro):
 
 # --- Jellyfin connection -------------------------------------------------------------------------
 
-def jellyfin() -> Jellyfin | None:
-    url, key = db.get_meta(state.conn, "jellyfin.url"), db.get_meta(state.conn, "jellyfin.key")
-    return Jellyfin(url, key, state.lan_http) if url and key else None
-
-
 def _jf_public() -> dict:
     return {"url": db.get_meta(state.conn, "jellyfin.url"), "configured": jellyfin() is not None,
-            "server_name": db.get_meta(state.conn, "jellyfin.name")}
+            "server_name": db.get_meta(state.conn, "jellyfin.name"),
+            "user_id": db.get_meta(state.conn, "jellyfin.user_id")}
+
+
+def _forget_server_links() -> None:
+    """A user and TV links belong to one server."""
+    for k in ("user_id", "user_name"):
+        db.set_meta(state.conn, f"jellyfin.{k}", "")
+    state.conn.execute("UPDATE devices SET jellyfin_device = ''")
 
 
 def _key_for(url: str, typed: str) -> str:
@@ -90,17 +94,84 @@ async def save_jellyfin(body: JellyfinIn):
         info = await Jellyfin(url, key, state.lan_http).info()
     except JellyfinError as exc:
         raise HTTPException(400, str(exc)) from exc
+    different = info["id"] != db.get_meta(state.conn, "jellyfin.server_id")
+    if different:
+        _forget_server_links()
     db.set_meta(state.conn, "jellyfin.url", url)
     db.set_meta(state.conn, "jellyfin.key", key)
     db.set_meta(state.conn, "jellyfin.name", info["name"])
+    db.set_meta(state.conn, "jellyfin.server_id", info["id"])
+    if source_routes.chosen() == "jellyfin":
+        # Without a user the new server can't be the source yet, so go back to Plex until one is chosen.
+        if different:
+            source_routes.switch("plex")
+        else:
+            source_routes.apply()
     return _jf_public()
 
 
 @router.delete("/settings/jellyfin")
 async def forget_jellyfin():
-    for k in ("url", "key", "name"):
+    was_source = source_routes.chosen() == "jellyfin"
+    for k in ("url", "key", "name", "server_id"):
         db.set_meta(state.conn, f"jellyfin.{k}", "")
+    _forget_server_links()
+    if was_source:
+        source_routes.switch("plex")
     return _jf_public()
+
+
+async def _jf_call(call):
+    try:
+        return await call
+    except JellyfinError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+@router.get("/settings/jellyfin/users")
+async def jellyfin_users():
+    jf = jellyfin()
+    if not jf:
+        raise HTTPException(400, "Connect your Jellyfin server first")
+    return await _jf_call(jf.users())
+
+
+class JellyfinUserIn(BaseModel):
+    user_id: str
+
+
+@router.put("/settings/jellyfin/user")
+async def set_jellyfin_user(body: JellyfinUserIn):
+    jf = jellyfin()
+    if not jf:
+        raise HTTPException(400, "Connect your Jellyfin server first")
+    user = next((u for u in await _jf_call(jf.users()) if u["id"] == body.user_id), None)
+    if not user:
+        raise HTTPException(400, "That user isn't on this server")
+    db.set_meta(state.conn, "jellyfin.user_id", user["id"])
+    db.set_meta(state.conn, "jellyfin.user_name", user["name"])
+    if source_routes.chosen() == "jellyfin":
+        source_routes.apply()   # watched status and up next are per user
+    return _jf_public()
+
+
+@router.get("/settings/jellyfin/devices")
+async def jellyfin_devices():
+    """Plezy installs signed in to this server, to link to TVs. Empty until Plezy has signed in on one."""
+    jf = jellyfin()
+    return await _jf_call(jf.plezy_devices()) if jf else []
+
+
+class TVLinkIn(BaseModel):
+    device: str = Field(default="", max_length=100)
+
+
+@router.put("/devices/{device_id}/jellyfin")
+async def link_jellyfin_device(device_id: int, body: TVLinkIn):
+    """Which Plezy on Jellyfin is this TV. Needed when the names differ, since the server may not see the TV's address."""
+    _tv(device_id)
+    state.conn.execute("UPDATE devices SET jellyfin_device = ? WHERE id = ?", (body.device, device_id))
+    return devices.get_device(state.conn, device_id)
 
 
 async def _jf_sessions(d: dict) -> list[JellyfinSession]:
@@ -111,8 +182,7 @@ async def _jf_sessions(d: dict) -> list[JellyfinSession]:
         found = await jf.sessions()
     except JellyfinError:
         return []
-    names = {d["name"].lower(), (d["plex_player"] or "").lower()} - {""}
-    return [s for s in found if s.address == d["host"] or s.device.lower() in names]
+    return [s for s in found if tune.is_on_tv(d, s.address, s.device, s.device_id)]
 
 
 # --- Remote --------------------------------------------------------------------------------------

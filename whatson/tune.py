@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from urllib.parse import urlencode
 
 from .devices.base import TVDriver, TVStatus
-from .sources.plex import PlexClient
+from .sources.base import Session, Source
 
 # Home screens and screensavers: a TV showing one of these is free to take over.
 IDLE_APPS = {
@@ -42,14 +42,25 @@ class Availability:
     status: TVStatus | None = None
 
 
-async def check_busy(driver: TVDriver, plex: PlexClient, device: dict) -> Availability:
+def is_on_tv(device: dict, address: str, player: str, device_id: str = "") -> bool:
+    """Whether something a server reports is on this TV. A linked Jellyfin device decides it outright,
+    because a server behind a proxy sees the proxy's address and an app's name can be anything."""
+    linked = device.get("jellyfin_device")
+    if linked and device_id:
+        return device_id == linked
+    return address == device["host"] or player.lower() in {device["name"].lower(), (device.get("plex_player") or "").lower()} - {""}
+
+
+def on_tv(s: Session, device: dict) -> bool:
+    return is_on_tv(device, s.player_address, s.player_title, s.device_id)
+
+
+async def check_busy(driver: TVDriver, source: Source, device: dict) -> Availability:
     status = await driver.status(device["host"])
     if not status.reachable or status.error:
         return Availability(busy=False, reason=status.error, status=status)
-    player = (device.get("plex_player") or device["name"]).lower()
-    for s in (await plex.sessions() if plex.configured else []):
-        if s.state in ("playing", "buffering") and (
-                s.player_title.lower() == player or s.player_address == device["host"]):
+    for s in (await source.playing() if source.configured else []):
+        if s.state in ("playing", "buffering") and on_tv(s, device):
             what = "Live TV" if s.live else s.title
             return Availability(busy=True, status=status,
                                 reason=f"{device['name']} is playing {what} in {s.product}.")

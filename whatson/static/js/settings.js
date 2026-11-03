@@ -1,5 +1,5 @@
-// Settings: Plex (sign-in or pasted token), TVs (+ pairing wizard), Sports (leagues and teams), AI search (+ model dropdown),
-// Downloads (Radarr/Sonarr, in get.js).
+// Settings: Source (Plex or Jellyfin), Plex (sign-in or pasted token), TVs (+ pairing wizard), Sports (leagues and teams),
+// AI search (+ model dropdown), Downloads (Radarr/Sonarr, in get.js), Jellyfin.
 
 import { $, $$, api, confirmDialog, debounce, esc, toast } from "./core.js";
 import { devices, loadDevices, selectDevice } from "./player.js";
@@ -8,11 +8,45 @@ import { initDownloadsSettings, loadDownloadsSettings } from "./get.js";
 export function openSettings(tab = "tvs") {
   for (const b of $$("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
   for (const p of $$("[data-panel]")) p.hidden = p.dataset.panel !== tab;
-  ({ plex: loadPlex, tvs: renderDevices, ai: loadAI, sports: loadSportsSettings, downloads: loadDownloadsSettings, jellyfin: loadJellyfin })[tab]?.()?.catch?.((e) => toast(e.message));
+  ({ source: loadSource, plex: loadPlex, tvs: renderDevices, ai: loadAI, sports: loadSportsSettings, downloads: loadDownloadsSettings, jellyfin: loadJellyfin })[tab]?.()?.catch?.((e) => toast(e.message));
   if (!$("#settings").open) $("#settings").showModal();
 }
 
+// --- Source ---------------------------------------------------------------------------------------
+
+async function loadSource() {
+  const s = await api("/api/settings/source");
+  const note = {
+    plex: s.plex ? "Connected" : "Not connected yet",
+    jellyfin: !s.jellyfin ? "Not connected yet" : s.jellyfin_user ? `Connected, as ${s.jellyfin_user}` : "Connected. Choose a user next.",
+  };
+  $("#src-choices").innerHTML = [["plex", "Plex"], ["jellyfin", "Jellyfin"]].map(([id, label]) => `
+    <button class="choice" data-source="${id}" aria-pressed="${s.source === id}">
+      <span>${label}<small>${esc(note[id])}</small></span>
+      ${s.source === id ? '<span class="badge">in use</span>' : ""}
+    </button>`).join("");
+  return s;
+}
+
+async function pickSource(id) {
+  const s = await loadSource();
+  const ready = id === "plex" ? s.plex : s.jellyfin && s.jellyfin_user;
+  if (!ready) return openSettings(id);   // its own tab connects it; pick it here afterwards
+  if (s.source === id) return;
+  const label = id === "plex" ? "Plex" : "Jellyfin";
+  if (!await confirmDialog(`Use ${label} for the guide and library? Your favorite channels are cleared.`, `Use ${label}`)) return;
+  await api("/api/settings/source", { method: "PUT", body: { source: id } });
+  await loadSource();
+  toast(`Loading the guide and library from ${label}…`);
+}
+
 // --- Jellyfin -------------------------------------------------------------------------------------
+
+async function loadJellyfinUsers(selected) {
+  const users = await api("/api/settings/jellyfin/users");
+  $("#jf-user").innerHTML = `${selected ? "" : '<option value="">Choose a user</option>'}` +
+    users.map((u) => `<option value="${esc(u.id)}" ${u.id === selected ? "selected" : ""}>${esc(u.name)}</option>`).join("");
+}
 
 async function loadJellyfin() {
   const j = await api("/api/settings/jellyfin");
@@ -24,6 +58,8 @@ async function loadJellyfin() {
   const st = $("#jf-status");
   st.className = `msg ${j.configured ? "ok" : ""}`;
   st.textContent = j.configured ? `Connected to ${j.server_name || j.url}` : "Not connected";
+  $("#jf-user-box").hidden = !j.configured;
+  if (j.configured) await loadJellyfinUsers(j.user_id);
 }
 
 // --- Plex -----------------------------------------------------------------------------------------
@@ -96,10 +132,20 @@ function showServers(pinId, r) {
 
 async function renderDevices() {
   await loadDevices();
+  // Only worth asking while Jellyfin is the source: it's how WhatsOn sees what a TV is playing.
+  const { source } = await api("/api/settings/source");
+  const plezys = source === "jellyfin" ? await api("/api/settings/jellyfin/devices").catch(() => []) : [];
+  const link = (d) => source !== "jellyfin" ? "" : `
+    <label class="d-meta">Plezy on Jellyfin
+      <select data-jf-link="${d.id}">
+        <option value="">Match by name</option>
+        ${plezys.map((p) => `<option value="${esc(p.id)}" ${p.id === d.jellyfin_device ? "selected" : ""}>${esc(p.name)}${p.user ? ` (${esc(p.user)})` : ""}</option>`).join("")}
+      </select>
+    </label>`;
   $("#device-list").innerHTML = devices.length ? devices.map((d) => `
     <div class="device" data-id="${d.id}">
       <div><div class="d-name">${esc(d.name)}</div>
-        <div class="d-meta">${esc(d.host)} · ${d.paired ? "paired" : "not paired"}</div></div>
+        <div class="d-meta">${esc(d.host)} · ${d.paired ? "paired" : "not paired"}</div>${link(d)}</div>
       <div class="d-actions">
         <button data-act="check">Check</button>
         <button data-act="rename">Rename</button>
@@ -401,6 +447,7 @@ export function initSettings() {
     const b = ev.target.closest("button");
     if (!b) return;
     if (b.dataset.tab) openSettings(b.dataset.tab);
+    else if (b.dataset.source) pickSource(b.dataset.source).catch((e) => toast(e.message));
     else if (b.dataset.act) deviceAction(Number(b.closest(".device").dataset.id), b.dataset.act, b);
     else if (b.dataset.followTeam) followTeam(JSON.parse(b.dataset.followTeam)).catch((e) => toast(e.message));
     else if (b.dataset.unfollowTeam) {
@@ -409,6 +456,15 @@ export function initSettings() {
     }
   });
   $("#add-tv").addEventListener("click", () => { $("#settings").close(); wizard.open(); });
+  $("#device-list").addEventListener("change", (ev) => {
+    const id = ev.target.dataset.jfLink;
+    if (id) api(`/api/devices/${id}/jellyfin`, { method: "PUT", body: { device: ev.target.value } }).then(loadDevices).catch((e) => toast(e.message));
+  });
+  $("#jf-user").addEventListener("change", (ev) => {
+    if (ev.target.value) api("/api/settings/jellyfin/user", { method: "PUT", body: { user_id: ev.target.value } })
+      .then(() => toast("Saved. Now choose Jellyfin in Settings → Source if you want it for the guide and library."))
+      .catch((e) => toast(e.message));
+  });
 
   $("#jf-form").addEventListener("submit", async (ev) => {
     ev.preventDefault();

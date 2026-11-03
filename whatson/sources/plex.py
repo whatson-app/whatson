@@ -7,81 +7,15 @@ any Plex Live TV setup, whatever feeds it (HDHomeRun, Dispatcharr, Plex's cloud 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
 
-SPORTS_RE = re.compile(
-    r"\b(football|basketball|baseball|hockey|soccer|NFL|NBA|WNBA|MLB|NHL|MLS|NCAA[FBM]?|"
-    r"college (?:football|basketball)|premier league|la liga|bundesliga|serie a|"
-    r"champions league|EFL|UFC|boxing|wrestling|golf|PGA|tennis|NASCAR|formula 1|F1|"
-    r"rugby|cricket|volleyball|softball|lacrosse|world series|stanley cup|super bowl|"
-    r"march madness|playoffs?|grand prix|olympics|racing|darts|snooker)\b",
-    re.I,
-)
+from .base import Airing, Channel, LibraryItem, Session, classify
+
 PAGE = 2000
-
-
-@dataclass
-class Channel:
-    id: str
-    vcn: str
-    title: str
-    callsign: str = ""
-    thumb: str = ""
-
-
-@dataclass
-class Airing:
-    channel_id: str
-    title: str
-    subtitle: str
-    summary: str
-    kind: str
-    begins: int
-    ends: int
-    year: int | None = None
-
-
-@dataclass
-class LibraryItem:
-    rating_key: str
-    kind: str
-    title: str
-    year: int | None
-    summary: str
-    genres: list[str] = field(default_factory=list)
-    people: list[str] = field(default_factory=list)
-    thumb: str = ""
-    section: str = ""
-    added_at: int = 0
-    duration: int = 0
-    content_rating: str = ""
-    audience_rating: float | None = None
-    watched: bool = False
-    leaf_count: int = 0
-    viewed_leaf_count: int = 0
-    guids: list[str] = field(default_factory=list)
-
-
-@dataclass
-class Session:
-    player_title: str
-    player_address: str
-    product: str
-    state: str
-    title: str
-    live: bool
-    kind: str = ""                 # movie | episode | live
-    show: str = ""
-    episode: str = ""              # "S02E05 Blue Mountains"
-    rating_key: str = ""
-    show_key: str = ""
-    thumb: str = ""
-    offset: int = 0                # ms
-    duration: int = 0              # ms
-    key: str = ""
+# Only exact Plex artwork paths, so /api/thumb can't be used to reach anything else on the server.
+THUMB_RE = re.compile(r"/library/metadata/\d+/(thumb|art)/\d+")
 
 
 def _list(container: dict[str, Any], key: str) -> list[dict[str, Any]]:
@@ -89,23 +23,13 @@ def _list(container: dict[str, Any], key: str) -> list[dict[str, Any]]:
     return value if isinstance(value, list) else [value]
 
 
-def classify(title: str, summary: str, plex_type: str, genres: list[str]) -> str:
-    text = f"{title} {summary} {' '.join(genres)}"
-    if any(g.lower() == "sports" for g in genres) or SPORTS_RE.search(text):
-        return "sports"
-    if plex_type == "episode":
-        return "episode"
-    if plex_type == "movie":
-        # Plex labels many XMLTV airings "movie"; only call it a film if it looks like one.
-        return "movie" if not title.lower().startswith("live:") else "other"
-    return "other"
-
-
 class PlexNotConnected(Exception):
     """No Plex server is set up yet (Settings → Plex)."""
 
 
 class PlexClient:
+    name, label = "plex", "Plex"
+
     def __init__(self, url: str, token: str, client_name: str = "WhatsOn",
                  http: httpx.AsyncClient | None = None, client_id: str = ""):
         self._http = http or httpx.AsyncClient(timeout=60)
@@ -145,6 +69,16 @@ class PlexClient:
 
     async def machine_identifier(self) -> str:
         return (await self._get("/identity"))["machineIdentifier"]
+
+    server_id = machine_identifier
+
+    async def load_guide(self, start: int, end: int) -> tuple[list[Channel], list[Airing]]:
+        channels: list[Channel] = []
+        airings: list[Airing] = []
+        for epg in await self.epg_identifiers():
+            channels += await self.channels(epg)
+            airings += await self.guide(epg, start, end)
+        return channels, airings
 
     async def epg_identifiers(self) -> list[str]:
         dvrs = _list(await self._get("/livetv/dvrs"), "Dvr")
@@ -251,6 +185,51 @@ class PlexClient:
                                offset=int(m.get("viewOffset") or 0), duration=int(m.get("duration") or 0),
                                key=m.get("key", "")))
         return out
+
+    playing = sessions
+
+    def valid_id(self, item_id: str) -> bool:
+        return item_id.isdigit()
+
+    async def item(self, item_id: str) -> dict | None:
+        m = await self.metadata(item_id)
+        if not m:
+            return None
+        out = {"rating_key": item_id, "kind": m.get("type"), "title": m.get("title"), "year": m.get("year"),
+               "summary": m.get("summary", ""), "duration": m.get("duration"), "content_rating": m.get("contentRating", ""),
+               "audience_rating": m.get("audienceRating"), "thumb": m.get("thumb", ""), "art": m.get("art", ""),
+               "genres": [g.get("tag") for g in m.get("Genre", [])], "cast": [r.get("tag") for r in m.get("Role", [])][:8],
+               "studio": m.get("studio", ""), "view_offset": m.get("viewOffset"), "watched": bool(m.get("viewCount"))}
+        if m.get("type") == "show":
+            out["seasons"] = [{"rating_key": str(s["ratingKey"]), "index": s.get("index"), "title": s.get("title"),
+                               "thumb": s.get("thumb", ""), "episodes": s.get("leafCount"),
+                               "watched": s.get("viewedLeafCount")} for s in await self.children(item_id)]
+        return out
+
+    async def episodes(self, season_id: str) -> list[dict]:
+        return [{"rating_key": str(e["ratingKey"]), "index": e.get("index"), "title": e.get("title"),
+                 "summary": e.get("summary", ""), "duration": e.get("duration"), "thumb": e.get("thumb", ""),
+                 "watched": bool(e.get("viewCount")), "view_offset": e.get("viewOffset"),
+                 "aired": e.get("originallyAvailableAt")} for e in await self.children(season_id)]
+
+    async def up_next(self) -> list[dict]:
+        out = []
+        for m in (await self.on_deck())[:12]:
+            ep = m.get("type") == "episode"
+            out.append({"type": "library", "kind": "show" if ep else "movie",
+                        "rating_key": str(m.get("grandparentRatingKey") or m.get("ratingKey")),
+                        "play_key": str(m.get("ratingKey")),
+                        "title": m.get("grandparentTitle") if ep else m.get("title"),
+                        "thumb": m.get("grandparentThumb") if ep else m.get("thumb", ""),
+                        "label": (f"S{int(m.get('parentIndex') or 0):02d}E{int(m.get('index') or 0):02d} {m.get('title', '')}"
+                                  if ep else "Continue watching"), "reason": "On deck in Plex"})
+        return out
+
+    async def thumb(self, path: str, width: int) -> httpx.Response | None:
+        if not THUMB_RE.fullmatch(path):
+            return None
+        return await self.get_raw("/photo/:/transcode",
+                                  {"url": path, "width": width, "height": int(width * 1.5), "minSize": 1})
 
     async def metadata(self, rating_key: str) -> dict:
         items = _list(await self._get(f"/library/metadata/{rating_key}"), "Metadata")

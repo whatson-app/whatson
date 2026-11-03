@@ -8,7 +8,7 @@ from pathlib import Path
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS channels (
-    id        TEXT PRIMARY KEY,     -- Plex channelIdentifier
+    id        TEXT PRIMARY KEY,     -- the server's channel id
     vcn       TEXT NOT NULL,        -- channel number shown to people and used to tune
     title     TEXT NOT NULL,
     callsign  TEXT NOT NULL DEFAULT '',
@@ -143,7 +143,8 @@ def connect(path: Path | str) -> sqlite3.Connection:
                 conn.execute(f"DROP TABLE IF EXISTS {t}")
     conn.executescript(SCHEMA)
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(devices)")}
-    for col, ddl in (("model", "TEXT NOT NULL DEFAULT ''"), ("mac", "TEXT NOT NULL DEFAULT ''")):
+    for col, ddl in (("model", "TEXT NOT NULL DEFAULT ''"), ("mac", "TEXT NOT NULL DEFAULT ''"),
+                     ("jellyfin_device", "TEXT NOT NULL DEFAULT ''")):
         if col not in cols:
             conn.execute(f"ALTER TABLE devices ADD COLUMN {col} {ddl}")
     if str(path) != ":memory:":
@@ -153,6 +154,15 @@ def connect(path: Path | str) -> sqlite3.Connection:
             if p.exists():
                 p.chmod(0o600)
     return conn
+
+
+def clear_server_data(conn: sqlite3.Connection) -> None:
+    """Everything tied to one server's ids, for when WhatsOn moves to another. Favorite channels go too:
+    the other server's channels have different ids."""
+    for table in ("channels", "airings", "airings_fts", "library", "library_fts", "fav_channels"):
+        conn.execute(f"DELETE FROM {table}")
+    for key in ("machine_id", "guide_refreshed", "library_refreshed"):
+        conn.execute("DELETE FROM meta WHERE key = ?", (key,))
 
 
 def set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
