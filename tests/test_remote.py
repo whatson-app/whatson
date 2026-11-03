@@ -105,7 +105,7 @@ def test_held_connection_is_reused_and_reopened_when_dropped(tmp_path, monkeypat
 
 def test_saved_jellyfin_key_only_goes_to_the_address_it_was_saved_with(monkeypatch):
     conn = db.connect(":memory:")
-    monkeypatch.setattr(remote_routes.state, "conn", conn)
+    monkeypatch.setattr(remote_routes.state, "conn", conn, raising=False)
     db.set_meta(conn, "jellyfin.url", "http://jf.lan:8096")
     db.set_meta(conn, "jellyfin.key", "s3cret")
     assert remote_routes._key_for("http://jf.lan:8096", "") == "s3cret"
