@@ -44,6 +44,20 @@ and a **now playing** bar for the TV you picked (what's on it, progress, pause a
 
 ## Run it
 
+With the prebuilt image (amd64 and arm64, so a 64-bit Raspberry Pi works):
+
+```bash
+mkdir whatson && cd whatson
+curl -fsSLO https://raw.githubusercontent.com/whatson-app/whatson/main/compose.yaml
+curl -fsSL https://raw.githubusercontent.com/whatson-app/whatson/main/.env.example -o .env
+docker compose up -d
+```
+
+Update later with `docker compose pull && docker compose up -d`. To pin a version, change `latest` in
+`compose.yaml` to a [release number](https://github.com/whatson-app/whatson/pkgs/container/whatson).
+
+Or build it yourself from a checkout:
+
 ```bash
 cp .env.example .env
 docker compose up -d --build

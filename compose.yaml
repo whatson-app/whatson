@@ -1,5 +1,7 @@
 services:
   whatson:
+    # `docker compose up -d` pulls this image; add --build in a checkout to build it yourself.
+    image: ghcr.io/whatson-app/whatson:latest
     build: .
     container_name: whatson
     restart: unless-stopped
