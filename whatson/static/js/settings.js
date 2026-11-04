@@ -1,14 +1,30 @@
-// Settings: Source (Plex or Jellyfin), Plex (sign-in or pasted token), TVs (+ pairing wizard), Sports (leagues and teams),
-// AI search (+ model dropdown), Downloads (Radarr/Sonarr, in get.js), Jellyfin.
+// Settings: Server (Plex or Jellyfin, each with its connection), TVs (+ pairing wizard), Sports (leagues and teams),
+// More: AI search (+ model dropdown), Downloads (Radarr/Sonarr, in get.js), Appearance.
 
 import { $, $$, api, applyTheme, confirmDialog, debounce, esc, store, toast } from "./core.js";
 import { devices, loadDevices, selectDevice } from "./player.js";
 import { initDownloadsSettings, loadDownloadsSettings } from "./get.js";
 
-export function openSettings(tab = "tvs") {
+// Each name other code can open: the tab, and the section to unfold there.
+const PLACES = {
+  server: ["server"], source: ["server"], plex: ["server", "plex"], jellyfin: ["server", "jellyfin"],
+  tvs: ["tvs"], sports: ["sports"],
+  more: ["more"], ai: ["more", "ai"], downloads: ["more", "downloads"], appearance: ["more", "appearance"],
+};
+
+const moreLoader = (name) => ({ ai: loadAI, downloads: loadDownloadsSettings, appearance: loadAppearance })[name];
+const showError = (e) => toast(e.message);
+
+export function openSettings(place = "tvs") {
+  const [tab, fold] = PLACES[place] || PLACES.tvs;
   for (const b of $$("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
   for (const p of $$("[data-panel]")) p.hidden = p.dataset.panel !== tab;
-  ({ source: loadSource, plex: loadPlex, tvs: renderDevices, ai: loadAI, sports: loadSportsSettings, downloads: loadDownloadsSettings, jellyfin: loadJellyfin, appearance: loadAppearance })[tab]?.()?.catch?.((e) => toast(e.message));
+  if (tab === "server") loadServer(fold).catch(showError);
+  if (tab === "tvs") renderDevices()?.catch?.(showError);
+  if (tab === "sports") loadSportsSettings().catch(showError);
+  // Unfolding fires "toggle", which loads that section; ones already open need refreshing here.
+  if (tab === "more") for (const d of $$('[data-panel="more"] .fold[open]')) moreLoader(d.id.slice(5))()?.catch?.(showError);
+  if (fold) $(`#fold-${fold}`).open = true;
   if (!$("#settings").open) {
     $("#settings").showModal();
     api("/api/status").then((s) => { $("#app-version").textContent = `WhatsOn ${s.version}`; }).catch(() => {});
@@ -23,19 +39,24 @@ async function loadSource() {
     plex: s.plex ? "Connected" : "Not connected yet",
     jellyfin: !s.jellyfin ? "Not connected yet" : s.jellyfin_user ? `Connected, as ${s.jellyfin_user}` : "Connected. Choose a user next.",
   };
-  $("#src-choices").innerHTML = [["plex", "Plex"], ["jellyfin", "Jellyfin"]].map(([id, label]) => `
-    <button class="choice" data-source="${id}" aria-pressed="${s.source === id}">
-      <span>${label}<small>${esc(note[id])}</small></span>
-      ${s.source === id ? '<span class="badge">in use</span>' : ""}
-    </button>`).join("");
+  const ready = { plex: s.plex, jellyfin: s.jellyfin && s.jellyfin_user };
+  for (const id of ["plex", "jellyfin"]) {
+    $(`#src-note-${id}`).textContent = note[id];
+    $(`#src-badge-${id}`).hidden = s.source !== id;
+    $(`#src-use-${id}`).hidden = s.source === id || !ready[id];
+  }
   return s;
 }
 
-async function pickSource(id) {
+// Everything on the Server tab. With no section asked for, unfold the server in use if it's connected.
+async function loadServer(fold) {
   const s = await loadSource();
-  const ready = id === "plex" ? s.plex : s.jellyfin && s.jellyfin_user;
-  if (!ready) return openSettings(id);   // its own tab connects it; pick it here afterwards
-  if (s.source === id) return;
+  if (!fold && s.connected && !$("#fold-plex").open && !$("#fold-jellyfin").open) $(`#fold-${s.source}`).open = true;
+  // These can wait on a server that's down, which mustn't hold up the other one.
+  for (const r of await Promise.allSettled([loadPlex(), loadJellyfin()])) if (r.reason) showError(r.reason);
+}
+
+async function pickSource(id) {
   const label = id === "plex" ? "Plex" : "Jellyfin";
   if (!await confirmDialog(`Use ${label} for the guide and library? Your favorite channels are cleared.`, `Use ${label}`)) return;
   await api("/api/settings/source", { method: "PUT", body: { source: id } });
@@ -122,7 +143,7 @@ function showServers(pinId, r) {
       await api("/api/settings/plex/server", { method: "POST", body: { pin_id: pinId, server_id: b.dataset.plexServer } });
       box.hidden = true;
       box.onclick = null;
-      await loadPlex();
+      await loadServer("plex");
       toast("Plex connected. Loading the guide and library…");
     } catch (e) {
       box.querySelector(".msg").outerHTML = `<p class="msg err">${esc(e.message)}</p>`;
@@ -465,7 +486,10 @@ export function initSettings() {
         .then(() => { teamCache = {}; return loadSportsSettings(); }).catch((e) => toast(e.message));
     }
   });
-  $('[data-panel="appearance"]').addEventListener("change", (ev) => {
+  for (const d of $$('[data-panel="more"] .fold')) {
+    d.addEventListener("toggle", () => { if (d.open) moreLoader(d.id.slice(5))()?.catch?.(showError); });
+  }
+  $("#fold-appearance").addEventListener("change", (ev) => {
     store.set("theme", ev.target.value);
     applyTheme(ev.target.value);
   });
@@ -476,7 +500,7 @@ export function initSettings() {
   });
   $("#jf-user").addEventListener("change", (ev) => {
     if (ev.target.value) api("/api/settings/jellyfin/user", { method: "PUT", body: { user_id: ev.target.value } })
-      .then(() => toast("Saved. Now choose Jellyfin in Settings → Source if you want it for the guide and library."))
+      .then(() => { toast("Saved."); return loadSource(); })
       .catch((e) => toast(e.message));
   });
 
@@ -486,18 +510,18 @@ export function initSettings() {
     btn.disabled = true;
     try {
       await api("/api/settings/jellyfin", { method: "PUT", body: { url: ev.target.url.value, key: ev.target.key.value } });
-      await loadJellyfin();
+      await loadServer("jellyfin");
     } catch (e) { $("#jf-status").className = "msg err"; $("#jf-status").textContent = e.message; } finally { btn.disabled = false; }
   });
   $("#jf-forget").addEventListener("click", async () => {
-    try { await api("/api/settings/jellyfin", { method: "DELETE" }); await loadJellyfin(); } catch (e) { toast(e.message); }
+    try { await api("/api/settings/jellyfin", { method: "DELETE" }); await loadServer("jellyfin"); } catch (e) { toast(e.message); }
   });
 
   $("#px-signin").addEventListener("click", startPlexSignin);
   $("#px-switch").addEventListener("click", startPlexSignin);
   $("#px-disconnect").addEventListener("click", async () => {
     if (!await confirmDialog("Disconnect Plex? The guide and library stop updating until you connect again.", "Disconnect")) return;
-    try { await api("/api/settings/plex", { method: "DELETE" }); await loadPlex(); } catch (e) { toast(e.message); }
+    try { await api("/api/settings/plex", { method: "DELETE" }); await loadServer("plex"); } catch (e) { toast(e.message); }
   });
   $("#px-manual").addEventListener("submit", async (ev) => {
     ev.preventDefault();
@@ -506,7 +530,7 @@ export function initSettings() {
     try {
       await api("/api/settings/plex/manual", { method: "PUT", body: { url: ev.target.url.value, token: ev.target.token.value } });
       ev.target.reset();
-      await loadPlex();
+      await loadServer("plex");
       toast("Plex connected. Loading the guide and library…");
     } catch (e) { toast(e.message); } finally { btn.disabled = false; }
   });

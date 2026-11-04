@@ -13,7 +13,7 @@
   <Support>https://github.com/whatson-app/whatson/issues</Support>
   <Project>https://github.com/whatson-app/whatson</Project>
   <ReadMe>https://github.com/whatson-app/whatson#readme</ReadMe>
-  <Overview>Search what's on Live TV and in your Plex or Jellyfin library, then put it on a TV with one tap. Each TV needs the Plezy app.[br][br]After the first start, open the Web UI, connect your server in Settings → Source and pair your TVs in Settings → TVs. There is no login: anyone who can open WhatsOn can change its settings and control your TVs, so keep it on your home network. Host networking lets it reach TVs on your network.</Overview>
+  <Overview>Search what's on Live TV and in your Plex or Jellyfin library, then put it on a TV with one tap. Each TV needs the Plezy app.[br][br]After the first start, open the Web UI, connect your server in Settings → Server and pair your TVs in Settings → TVs. There is no login: anyone who can open WhatsOn can change its settings and control your TVs, so keep it on your home network. Host networking lets it reach TVs on your network.</Overview>
   <Category>MediaApp:Video Tools:</Category>
   <WebUI>http://[IP]:8430/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/whatson-app/whatson/main/deploy/unraid/whatson.xml</TemplateURL>
@@ -26,6 +26,6 @@
   <Requirement>A Plex or Jellyfin server, and a Google TV or Android TV device with Plezy installed.</Requirement>
   <Config Name="Data" Target="/data" Default="/mnt/user/appdata/whatson" Mode="rw" Description="Settings, TV pairings and saved keys. Protect this folder like a password file." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/whatson</Config>
   <Config Name="Allowed host names" Target="ALLOWED_HOSTS" Default="" Mode="" Description="Names you open WhatsOn by, separated by commas. Only needed for a DNS name or a reverse proxy: IP addresses and localhost always work." Type="Variable" Display="advanced" Required="false" Mask="false"/>
-  <Config Name="Plex address" Target="PLEX_URL" Default="" Mode="" Description="Optional. Used only when nothing is saved in Settings → Plex, which is the easier way to connect." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Plex address" Target="PLEX_URL" Default="" Mode="" Description="Optional. Used only when nothing is saved in Settings → Server → Plex, which is the easier way to connect." Type="Variable" Display="advanced" Required="false" Mask="false"/>
   <Config Name="Plex token" Target="PLEX_TOKEN" Default="" Mode="" Description="Optional. Goes with the Plex address above." Type="Variable" Display="advanced" Required="false" Mask="true"/>
 </Container>

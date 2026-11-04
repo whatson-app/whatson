@@ -1,4 +1,4 @@
-"""Settings → Plex: Sign in with Plex (pick a server), paste a token, or use PLEX_URL/PLEX_TOKEN."""
+"""Settings → Server → Plex: Sign in with Plex (pick a server), paste a token, or use PLEX_URL/PLEX_TOKEN."""
 
 from __future__ import annotations
 

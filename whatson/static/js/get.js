@@ -79,7 +79,7 @@ export async function showGet(kind, id) {
   let actions = "";
   if (c.state === "in_plex") actions = `<div class="chips"><button class="chip primary-chip" ${open}>${c.kind === "show" ? "Open show" : "▶ Play on TV"}</button></div>`;
   else if (c.state === "not_added" && d.allow_add) actions = addForm(d);
-  else if (c.state === "not_added") actions = '<p class="hint">Adding is turned off in Settings → Downloads.</p>';
+  else if (c.state === "not_added") actions = '<p class="hint">Adding is turned off in Settings → More → Downloads.</p>';
   else if (c.state === "missing" && d.allow_add) actions = `<div class="chips"><button class="chip primary-chip" id="get-search">Search now</button></div>`;
   else if (c.state === "downloading") actions = `<div class="meter"><span style="width:${pct(c.progress)}"></span></div>`;
   body.innerHTML = `
@@ -166,7 +166,7 @@ export async function renderDownloads(el) {
     try {
       const r = await api("/api/get/downloads");
       if (!r.configured.movie && !r.configured.show) {
-        box.innerHTML = '<p class="empty">Connect Radarr or Sonarr in <button class="link-btn" data-settings="downloads">Settings → Downloads</button> to add movies and shows.</p>';
+        box.innerHTML = '<p class="empty">Connect Radarr or Sonarr in <button class="link-btn" data-settings="downloads">Settings → More → Downloads</button> to add movies and shows.</p>';
         return;
       }
       const errs = Object.entries(r.errors).map(([k, m]) => `<p class="msg err">${esc(APP[k])}: ${esc(m)}</p>`).join("");
@@ -297,7 +297,7 @@ export function initDownloadsSettings() {
     try { await api("/api/settings/downloads", { method: "PUT", body: { allow_add: ev.target.checked } }); }
     catch (e) { toast(e.message); ev.target.checked = !ev.target.checked; }
   });
-  const panel = $('[data-panel="downloads"]');
+  const panel = $("#fold-downloads");
   panel.addEventListener("click", (ev) => {
     const form = ev.target.closest("form.dl-form");
     if (!form) return;

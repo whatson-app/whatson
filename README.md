@@ -36,12 +36,12 @@ and a **now playing** bar for the TV you picked (what's on it, progress, pause a
   seasons and episodes; "up next" from your server and a pick for tonight.
 - **Remote**: power, d-pad, playback, volume, channels, typing, and an app row per TV.
   A TV can't list its installed apps, so the row learns what it sees in front and lets you tick the rest.
-- **Get movies and shows you don't have (optional)**: connect Radarr and/or Sonarr in ⚙ → Downloads.
+- **Get movies and shows you don't have (optional)**: connect Radarr and/or Sonarr in ⚙ → More → Downloads.
   Searches then add rows of matching titles you don't own; one tap opens a sheet to add
   it (quality, folder, which episodes, anime routing pre-filled from your settings) and start a search.
   Library → Downloads follows each title through downloading until it's in your library, then it's a Play button.
   WhatsOn only adds and searches; it never edits or deletes anything in Radarr or Sonarr. A switch in
-  ⚙ → Downloads turns adding off; while it's on, anyone who can open WhatsOn can add.
+  ⚙ → More → Downloads turns adding off; while it's on, anyone who can open WhatsOn can add.
 - **Sports**: follow leagues and teams; your teams pinned on top with live scores, last result and next
   game (following a college team covers that school's football and basketball); close games worth switching to; "catch me up" recaps; scores refresh every 30 s while you follow a live game.
 - **AI (optional)**: Claude, OpenAI, OpenRouter, or a local OpenAI-compatible server (LM Studio, Ollama).
@@ -79,7 +79,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Open `http://<host>:8430`. The first time, ⚙ **Source** opens: choose Plex or Jellyfin and connect it
+Open `http://<host>:8430`. The first time, ⚙ **Server** opens: choose Plex or Jellyfin and connect it
 (see [Connecting to Plex](#connecting-to-plex) and [Connecting to Jellyfin](#connecting-to-jellyfin)).
 Then in ⚙ **TVs**: add each TV by IP address, press **Pair**
 and type the code the TV shows. Pairing uses the Android TV Remote protocol (the one the Google TV
@@ -95,14 +95,14 @@ The container uses host networking so it can reach TVs on your LAN.
 
 Three ways, in the order WhatsOn prefers them:
 
-1. **Sign in with Plex** (⚙ → Plex). Plex's own sign-in: you approve WhatsOn on plex.tv, and WhatsOn
+1. **Sign in with Plex** (⚙ → Server → Plex). Plex's own sign-in: you approve WhatsOn on plex.tv, and WhatsOn
    never sees your password. It shows up as "WhatsOn" under Plex → Settings → Authorized Devices.
    Under the hood it uses Plex's newer JWT sign-in (a key kept by WhatsOn, renewed every few days).
    Plex Media Server doesn't accept those tokens yet, so for the server itself WhatsOn uses the server
    token plex.tv lists for your account.
-2. **Paste a token** (⚙ → Plex → Paste a token instead), for setups where the sign-in pop-up can't work.
+2. **Paste a token** (⚙ → Server → Plex → Paste a token instead), for setups where the sign-in pop-up can't work.
    In Plex Web, open any item → Get Info → View XML and copy `X-Plex-Token` from the address bar.
-3. **`PLEX_URL` and `PLEX_TOKEN`** in `.env`, for headless setups. Used only when nothing is saved in ⚙ → Plex.
+3. **`PLEX_URL` and `PLEX_TOKEN`** in `.env`, for headless setups. Used only when nothing is saved in ⚙ → Server → Plex.
 
 Be aware: if you own the server, any of these tokens can do everything you can on it. WhatsOn only
 reads (guide, library, sessions, artwork), but nothing on Plex's side limits it to that. A friend's
@@ -110,9 +110,9 @@ shared account gets only what you shared with them.
 
 ## Connecting to Jellyfin
 
-1. In ⚙ → Jellyfin, enter the server address and an API key (Jellyfin → Dashboard → API Keys).
+1. In ⚙ → Server → Jellyfin, enter the server address and an API key (Jellyfin → Dashboard → API Keys).
 2. Choose the user whose watched status and up next to show. WhatsOn shows one user for the whole household.
-3. In ⚙ → Source, choose Jellyfin. The guide and library reload from it.
+3. In ⚙ → Server, choose Jellyfin. The guide and library reload from it.
 4. On each TV, sign in to the same Jellyfin server in Plezy. WhatsOn can't do this for you. If Plezy isn't
    signed in, the title won't start, and WhatsOn says so after about 25 seconds.
 5. If WhatsOn doesn't see what a TV is playing, link it in ⚙ → TVs → Plezy on Jellyfin. This happens when the
@@ -122,7 +122,7 @@ shared account gets only what you shared with them.
 Be aware: a Jellyfin API key has full access to the server. WhatsOn only reads from it, apart from the
 Remote tab's playback commands, but nothing on Jellyfin's side limits it to that.
 
-WhatsOn reads one server at a time, and doesn't merge the two. Switching in ⚙ → Source reloads the guide and
+WhatsOn reads one server at a time, and doesn't merge the two. Switching in ⚙ → Server reloads the guide and
 library and clears favorite channels, because the other server's channels have different ids. The busy check
 only sees the server in use, so it won't notice Plezy playing from the other one.
 
@@ -137,7 +137,7 @@ WhatsOn starts playback by sending the TV an app link. Today only one app takes 
 |---|---|
 | [Plezy](https://github.com/edde746/plezy) | Everything: tune Live TV channels and play library titles, from Plex or Jellyfin. Paid on Google Play, free from its GitHub releases. |
 | Plex (official) | Open it and use the Remote keys. Since the 2026 redesign the Android TV app doesn't accept remote "play this" commands. |
-| Jellyfin apps | Remote tab only: with a Jellyfin server connected (⚙ → Jellyfin), pause, seek and skip whatever is playing, including third-party apps that allow remote control. WhatsOn doesn't start titles in them; to play from Jellyfin, use Plezy. |
+| Jellyfin apps | Remote tab only: with a Jellyfin server connected (⚙ → Server → Jellyfin), pause, seek and skip whatever is playing, including third-party apps that allow remote control. WhatsOn doesn't start titles in them; to play from Jellyfin, use Plezy. |
 | Anything else | The Remote keys work with every app. |
 
 Google TV also stopped letting other apps open apps by name (August 2026 Play Store update), so WhatsOn
@@ -150,7 +150,7 @@ without one (Jellyfin, Kodi) may not open from the app row on Google TV; older A
 ## Security
 
 - **There is no login.** Anyone who can open WhatsOn can change its settings, pair and control TVs,
-  and (when ⚙ → Downloads allows it) add movies and shows to Radarr and Sonarr, which start downloading.
+  and (when ⚙ → More → Downloads allows it) add movies and shows to Radarr and Sonarr, which start downloading.
   Keep it on your home network. Don't port-forward it or put it behind a public reverse proxy.
 - Keys and tokens are kept in WhatsOn's database in the data folder (`/data`) and are never sent to the
   browser. Protect that folder like a password file.
@@ -171,7 +171,7 @@ A link replaces whatever is playing on that TV, which is why the busy check exis
 
 ## Data sources
 
-- Guide, channels and library: your Plex or Jellyfin server (⚙ → Source).
+- Guide, channels and library: your Plex or Jellyfin server (⚙ → Server).
 - Sports teams and scores: ESPN's public scoreboard feed. It is **unofficial and undocumented** and
   may change without notice. Games are matched to listings by TV network and kickoff time, or by both
   team names appearing in the channel or listing.
@@ -180,7 +180,7 @@ A link replaces whatever is playing on that TV, which is why the busy check exis
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -e ".[dev,anthropic,openai]"
-DATA_DIR=./data .venv/bin/uvicorn whatson.app:app --reload    # then ⚙ → Source
+DATA_DIR=./data .venv/bin/uvicorn whatson.app:app --reload    # then ⚙ → Server
 .venv/bin/pytest
 ```
 
