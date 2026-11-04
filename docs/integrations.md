@@ -24,6 +24,11 @@ now-playing uses the last channel WhatsOn tuned on that TV, checked against the 
 An owner's token can do everything on the server. WhatsOn only reads, and nothing on Plex's side limits it to that. See
 [ADR 0013](adr/0013-plex-sign-in-and-server-token.md) for sign-in.
 
+Each TV can have its own Plex Home user. WhatsOn gets a server token for that user from plex.tv and reads their Up Next,
+title details and watched status with it, and Plezy links name them with `profile=`. The guide, the library list and the
+busy check stay on the owner's token, because a user's token is refused on `/status/sessions`. See
+[ADR 0025](adr/0025-a-plex-home-user-for-each-tv.md).
+
 ## Jellyfin
 
 Uses the Sessions API, so it sees official and third-party apps. Remote control works for apps that report

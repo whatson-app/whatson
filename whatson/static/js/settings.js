@@ -159,6 +159,17 @@ async function renderDevices() {
   // Only worth asking while Jellyfin is the source: it's how WhatsOn sees what a TV is playing.
   const { source } = await api("/api/settings/source");
   const plezys = source === "jellyfin" ? await api("/api/settings/jellyfin/devices").catch(() => []) : [];
+  // Empty unless Plex is the source and the account has a Plex Home.
+  const homeUsers = source === "plex" ? await api("/api/settings/plex/users").catch(() => []) : [];
+  const watcher = (d) => homeUsers.length < 2 ? "" : `
+    <label class="d-meta">Who watches here
+      <select data-plex-user="${d.id}">
+        <option value="">Not set</option>
+        ${homeUsers.map((u) => `<option value="${esc(u.uuid)}" ${u.uuid === d.plex_user ? "selected" : ""} ${u.protected ? "disabled" : ""}>${esc(u.name)}${u.protected ? " (has a PIN)" : ""}</option>`).join("")}
+      </select>
+    </label>`;
+  const restricted = homeUsers.length > 1 && homeUsers.some((u) => u.restricted)
+    ? '<p class="hint">A restricted Plex user can still see every title in WhatsOn, so this isn\'t a parental control.</p>' : "";
   const link = (d) => source !== "jellyfin" ? "" : `
     <label class="d-meta">Plezy on Jellyfin
       <select data-jf-link="${d.id}">
@@ -169,14 +180,14 @@ async function renderDevices() {
   $("#device-list").innerHTML = devices.length ? devices.map((d) => `
     <div class="device" data-id="${d.id}">
       <div><div class="d-name">${esc(d.name)}</div>
-        <div class="d-meta">${esc(d.host)} · ${d.paired ? "paired" : "not paired"}</div>${link(d)}</div>
+        <div class="d-meta">${esc(d.host)} · ${d.paired ? "paired" : "not paired"}</div>${link(d)}${watcher(d)}</div>
       <div class="d-actions">
         <button data-act="check">Check</button>
         <button data-act="rename">Rename</button>
         <button data-act="pair">${d.paired ? "Re-pair" : "Pair"}</button>
         <button data-act="remove" aria-label="Remove ${esc(d.name)}">✕</button>
       </div>
-    </div>`).join("") : '<p class="hint">No TVs yet. Add one to tune from anywhere in the app.</p>';
+    </div>`).join("") + restricted : '<p class="hint">No TVs yet. Add one to tune from anywhere in the app.</p>';
 }
 
 async function deviceAction(id, act, btn) {
@@ -497,6 +508,13 @@ export function initSettings() {
   $("#device-list").addEventListener("change", (ev) => {
     const id = ev.target.dataset.jfLink;
     if (id) api(`/api/devices/${id}/jellyfin`, { method: "PUT", body: { device: ev.target.value } }).then(loadDevices).catch((e) => toast(e.message));
+    const tv = ev.target.dataset.plexUser;
+    if (tv) {
+      api(`/api/devices/${tv}/plex-user`, { method: "PUT", body: { user: ev.target.value } })
+        .then(() => toast("Saved. Watched status can take a minute to catch up."))
+        .catch((e) => toast(e.message))
+        .finally(renderDevices);
+    }
   });
   $("#jf-user").addEventListener("change", (ev) => {
     if (ev.target.value) api("/api/settings/jellyfin/user", { method: "PUT", body: { user_id: ev.target.value } })

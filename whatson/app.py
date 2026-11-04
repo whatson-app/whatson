@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import __version__, ai_settings, config, db, devices, plex_auth, safe_http, search, source_routes, tune
+from . import __version__, ai_settings, config, db, devices, plex_auth, plex_users, safe_http, search, source_routes, tune
 from .ai import Interpreter
 from .devices.androidtv import AndroidTVDriver, NotPaired
 from .devices.base import PairingError, WrongCode
@@ -57,7 +57,8 @@ async def lifespan(app: FastAPI):
     state.refresher = Refresher(s, state.conn, state.source)
     state.trakt = Trakt(state.conn, state.http)
     tasks = [asyncio.create_task(state.refresher.run_forever()), asyncio.create_task(_trakt_loop()),
-             asyncio.create_task(renew_loop()), asyncio.create_task(_drop_idle_loop())]
+             asyncio.create_task(renew_loop()), asyncio.create_task(_drop_idle_loop()),
+             asyncio.create_task(_plex_users_loop())]
     yield
     for t in tasks:
         t.cancel()
@@ -74,6 +75,16 @@ async def _drop_idle_loop():
             drv.drop_idle()
 
 
+async def _plex_users_loop():
+    """Each TV's Plex user's watched status, as often as the library itself."""
+    while True:
+        try:
+            await plex_users.refresh_all()
+        except Exception:
+            log.exception("Refreshing Plex users' watched status failed")
+        await asyncio.sleep(state.settings.library_refresh_minutes * 60)
+
+
 async def _trakt_loop():
     while True:
         try:
@@ -88,6 +99,7 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.include_router(api_router)
 app.include_router(arr_router)
 app.include_router(plex_router)
+app.include_router(plex_users.router)
 app.include_router(remote_router)
 app.include_router(source_routes.router)
 
@@ -156,7 +168,7 @@ async def status():
 
 @app.get("/api/search")
 async def do_search(q: str = "", scope: str = "all", ai: bool = True, on_now: bool = False,
-                    kind: str = "", filters: str = ""):
+                    kind: str = "", filters: str = "", device: int = 0):
     """Search one section. `filters` (JSON) replays edited chips without asking the AI again."""
     note = ""
     if filters:
@@ -174,6 +186,8 @@ async def do_search(q: str = "", scope: str = "all", ai: bool = True, on_now: bo
         f.kinds = [kind]
     f.on_now = f.on_now or on_now
     out = search.run(state.conn, f)
+    if user := plex_users.viewer(device):
+        plex_users.apply_watched(user, out["library"])
     out["note"] = note
     out["ai"] = bool(note)
     out["filters"] = search.filters_dict(f)
@@ -388,7 +402,7 @@ async def test_tv(device_id: int, body: TestIn):
         if avail.busy:
             raise HTTPException(409, {"code": "busy", "message": avail.reason})
     try:
-        await drv.open_link(d["host"], tune.open_link())
+        await drv.open_link(d["host"], tune.open_link(plex_users.profile_for(d)))
     except NotPaired as exc:
         devices.mark_paired(state.conn, device_id, False)
         raise HTTPException(409, {"code": "not_paired", "message": str(exc)}) from exc
@@ -417,11 +431,12 @@ async def do_tune(body: TuneIn):
     d = _device(body.device_id)
     drv = _driver(d)
     server = db.get_meta(state.conn, "machine_id")
+    profile = plex_users.profile_for(d)
     if body.channel:
         # Plezy pools the channels of every server it's signed in to unless told which one.
-        link = tune.live_link(body.channel, server)
+        link = tune.live_link(body.channel, server, profile)
     elif body.rating_key:
-        link = tune.play_link(server, body.rating_key)
+        link = tune.play_link(server, body.rating_key, profile)
     else:
         raise HTTPException(400, "Give a channel or a rating_key")
     if not body.force:
@@ -441,5 +456,7 @@ async def do_tune(body: TuneIn):
         if row:
             state.last_tune[d["id"]] = (row["id"], time.time())
     route_cache.pop(f"now:{d['id']}", None)
-    # Plezy can only play from Jellyfin once it's signed in there, and a link can't report that it failed.
-    return {"ok": True, "link": link, "device": d["name"], "confirm": state.source.name == "jellyfin"}
+    # Plezy can only play from Jellyfin once it's signed in there, and a profile it doesn't have starts
+    # nothing. A link can't report either failure, so the page checks that something started.
+    return {"ok": True, "link": link, "device": d["name"], "confirm": state.source.name == "jellyfin" or bool(profile),
+            "profile_user": d["plex_user_name"] if profile else ""}

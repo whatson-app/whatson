@@ -10,6 +10,8 @@ let nowTimer = null;
 export const setPairHandler = (fn) => { onNeedPair = fn; };
 export const setSettingsHandler = (fn) => { onOpenSettings = fn; };
 export const selectedId = () => Number($("#tv").value) || null;
+// Watched status and Up Next follow the selected TV's Plex user.
+export const deviceParam = () => `device=${selectedId() || 0}`;
 
 export async function loadDevices() {
   devices = await api("/api/devices");
@@ -52,7 +54,7 @@ export async function tuneTo(target, btn) {
     }
     toast(`Starting on ${r.device}…`);
     setTimeout(refreshNow, 6000);
-    if (r.confirm) confirmStarted(deviceId, r.device, target);
+    if (r.confirm) confirmStarted(deviceId, r.device, target, r.profile_user);
   } catch (e) {
     toast(e.message);
   } finally {
@@ -61,14 +63,16 @@ export async function tuneTo(target, btn) {
 }
 
 // Live TV can take 15 seconds to show as playing, so don't call it a failure sooner than this.
-async function confirmStarted(deviceId, name, target) {
+async function confirmStarted(deviceId, name, target, profileUser) {
   for (let i = 0; i < 5; i++) {
     await new Promise((done) => setTimeout(done, 5000));
     const n = await api(`/api/devices/${deviceId}/now`).catch(() => null);
     if (!n) return;
     if (target.channel ? n.channel?.vcn === target.channel : [n.rating_key, n.show_key].includes(target.rating_key)) return;
   }
-  toast(`Couldn't confirm it started on ${name}. Check Plezy there is signed in to Jellyfin, and that the TV is linked in Settings → TVs.`, 12000);
+  toast(profileUser
+    ? `Couldn't confirm it started on ${name}. Check Plezy there is up to date, has a profile for ${profileUser}, and that ${profileUser} can see this title in Plex.`
+    : `Couldn't confirm it started on ${name}. Check Plezy there is signed in to Jellyfin, and that the TV is linked in Settings → TVs.`, 12000);
 }
 
 function nowHtml(n) {

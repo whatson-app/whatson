@@ -2,6 +2,7 @@
 // as chips you can remove; with AI on, a one-line answer is written from the matches only.
 
 import { $, ai, aiPlaceholder, api, esc, working } from "./core.js";
+import { deviceParam } from "./player.js";
 
 function chipsFor(f) {
   const out = [];
@@ -102,7 +103,7 @@ export function mountSearch(root, { scope, kind = "", placeholder, onResults, on
   const run = async (q) => {
     query = q;
     if (!q) { latest++; setBusy(""); chips.hidden = answer.hidden = true; filters = null; return onClear(); }
-    await search(() => api(`/api/search?q=${encodeURIComponent(q)}&scope=${scope}&kind=${kind}`),
+    await search(() => api(`/api/search?q=${encodeURIComponent(q)}&scope=${scope}&kind=${kind}&${deviceParam()}`),
       ai.on ? "AI is reading your question…" : "Searching…");
   };
 
@@ -114,7 +115,7 @@ export function mountSearch(root, { scope, kind = "", placeholder, onResults, on
     const next = without(filters, b.dataset.chip);
     const wasAi = chips.querySelector(".chip.ai") !== null;
     await search(async () => {
-      const r = await api(`/api/search?scope=${scope}&kind=${kind}&filters=${encodeURIComponent(JSON.stringify(next))}`);
+      const r = await api(`/api/search?scope=${scope}&kind=${kind}&${deviceParam()}&filters=${encodeURIComponent(JSON.stringify(next))}`);
       r.ai = wasAi;
       return r;
     }, "Searching…");

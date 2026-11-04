@@ -121,6 +121,20 @@ CREATE TABLE IF NOT EXISTS tv_apps (          -- apps seen on (or ticked for) ea
     PRIMARY KEY (device_id, package)
 );
 
+CREATE TABLE IF NOT EXISTS plex_user_tokens ( -- a Plex Home user's server token, and the address it's for
+    uuid  TEXT PRIMARY KEY,
+    url   TEXT NOT NULL,
+    token TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_watched (     -- watched status for Plex Home users other than the owner
+    user       TEXT NOT NULL,
+    rating_key TEXT NOT NULL,
+    watched    INTEGER NOT NULL DEFAULT 0,
+    viewed_leaf_count INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user, rating_key)
+);
+
 CREATE TABLE IF NOT EXISTS meta (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -146,7 +160,8 @@ def connect(path: Path | str) -> sqlite3.Connection:
     conn.executescript(SCHEMA)
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(devices)")}
     for col, ddl in (("model", "TEXT NOT NULL DEFAULT ''"), ("mac", "TEXT NOT NULL DEFAULT ''"),
-                     ("jellyfin_device", "TEXT NOT NULL DEFAULT ''")):
+                     ("jellyfin_device", "TEXT NOT NULL DEFAULT ''"), ("plex_user", "TEXT NOT NULL DEFAULT ''"),
+                     ("plex_user_name", "TEXT NOT NULL DEFAULT ''")):
         if col not in cols:
             conn.execute(f"ALTER TABLE devices ADD COLUMN {col} {ddl}")
     if str(path) != ":memory:":
@@ -161,7 +176,7 @@ def connect(path: Path | str) -> sqlite3.Connection:
 def clear_server_data(conn: sqlite3.Connection) -> None:
     """Everything tied to one server's ids, for when WhatsOn moves to another. Favorite channels go too:
     the other server's channels have different ids."""
-    for table in ("channels", "airings", "airings_fts", "library", "library_fts", "fav_channels"):
+    for table in ("channels", "airings", "airings_fts", "library", "library_fts", "fav_channels", "user_watched"):
         conn.execute(f"DELETE FROM {table}")
     for key in ("machine_id", "guide_refreshed", "library_refreshed"):
         conn.execute("DELETE FROM meta WHERE key = ?", (key,))

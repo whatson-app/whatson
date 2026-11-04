@@ -18,6 +18,7 @@ import sqlite3
 import time
 import uuid
 from dataclasses import dataclass
+from urllib.parse import quote
 
 import httpx
 from cryptography.hazmat.primitives import serialization
@@ -75,6 +76,20 @@ def public(conn: sqlite3.Connection, pc: PlexConn) -> dict:
 def forget(conn: sqlite3.Connection) -> None:
     for k in ("source", "url", "server_token", "server_name", "server_id", "account", "jwt", "jwt_at"):
         db.set_meta(conn, f"plex.{k}", "")
+    conn.execute("DELETE FROM plex_user_tokens")
+    conn.execute("DELETE FROM user_watched")
+    conn.execute("UPDATE devices SET plex_user = '', plex_user_name = ''")
+
+
+def saved_user_token(conn: sqlite3.Connection, user: str, url: str) -> str:
+    """A Plex Home user's saved token, but only for the address it was saved with."""
+    row = conn.execute("SELECT token FROM plex_user_tokens WHERE uuid = ? AND url = ?", (user, url)).fetchone()
+    return row["token"] if row else ""
+
+
+def save_user_token(conn: sqlite3.Connection, user: str, url: str, token: str) -> None:
+    conn.execute("INSERT INTO plex_user_tokens (uuid, url, token) VALUES (?, ?, ?) "
+                 "ON CONFLICT(uuid) DO UPDATE SET url = excluded.url, token = excluded.token", (user, url, token))
 
 
 def save_server(conn: sqlite3.Connection, source: str, url: str, token: str, name: str = "", server_id: str = "") -> None:
@@ -181,6 +196,24 @@ class PlexTV:
             if d.get("clientIdentifier") == server_id and d.get("token"):
                 return d["token"]
         raise PlexAuthError("plex.tv didn't give a token for that server")
+
+    async def home_users(self, token: str) -> list[dict]:
+        """People in this account's Plex Home. Ids and display names only: no emails or tokens."""
+        me = await self._call("GET", "/api/v2/user", token=token)
+        home = await self._call("GET", "/api/v2/home/users", token=token)
+        return [{"uuid": u["uuid"], "name": u.get("title") or u.get("friendlyName") or u.get("username") or "Plex user",
+                 "owner": u["uuid"] == me.get("uuid"), "restricted": bool(u.get("restricted")),
+                 "protected": bool(u.get("protected"))} for u in (home or {}).get("users", []) if u.get("uuid")]
+
+    async def user_server_token(self, token: str, user: str, server_id: str) -> str:
+        """The token this server accepts for a Home user. The switch gives a token that only plex.tv
+        accepts (tested 2026-11-03: the server answers 401), so that one asks plex.tv for the server's."""
+        switched = await self._call("POST", f"/api/v2/home/users/{quote(user, safe='')}/switch", token=token)
+        for d in await self._call("GET", "/api/v2/resources", token=(switched or {}).get("authToken", ""),
+                                  params={"includeHttps": 1}) or []:
+            if d.get("clientIdentifier") == server_id and d.get("accessToken"):
+                return d["accessToken"]
+        raise PlexAuthError("This Plex server isn't shared with that user")
 
 
 async def reachable(http: httpx.AsyncClient, url: str, token: str, server_id: str = "") -> str:

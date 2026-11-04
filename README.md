@@ -59,7 +59,7 @@ One search bar across live TV, games, your library and titles you could get.
 - Following a college team covers that school's football and basketball.
 - Each league you follow gets its own tab.
 - Close games worth switching to, and "Catch me up" recaps.
-- Scores refresh every 30 seconds while a team or league you follow is playing.
+- Scores refresh every 30 seconds while a team or league you follow is playing, otherwise every 5 minutes (`SPORTS_REFRESH_MINUTES`). [How scores refresh](docs/adr/0026-how-sports-scores-refresh.md).
 
 ### Remote and tuning
 
@@ -211,6 +211,20 @@ Three ways, in the order WhatsOn prefers them:
 Be aware: if you own the server, any of these tokens can do everything you can on it. WhatsOn only
 reads (guide, library, sessions, artwork), but nothing on Plex's side limits it to that. A friend's
 shared account gets only what you shared with them.
+
+**A Plex Home user for each TV (optional).** In ⚙ → TVs, choose who watches on each TV. Picking that TV then shows that
+person's Up Next and watched status, and anything you start plays as them in Plezy, so their progress goes to the right place.
+
+- The TV needs a Plezy version with profile links (2.25.0 works) and a profile for that person. If Plezy can't switch,
+  nothing starts, and WhatsOn says so after about 25 seconds.
+- Starting something switches Plezy to that person, even if someone chose another profile on the TV. Plezy stays on it.
+- A TV with no one chosen stays on whichever profile Plezy last used, and WhatsOn shows the owner's history.
+- Users with a Plex PIN can't be chosen.
+- **This isn't a parental control.** A restricted user can still see every title in WhatsOn, including ones Plex hides
+  from them.
+- WhatsOn saves a token for each person chosen, and each one adds a device to that person's Plex account.
+
+Why it works this way: [ADR 0025](docs/adr/0025-a-plex-home-user-for-each-tv.md).
 
 </details>
 
