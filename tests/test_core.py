@@ -11,10 +11,10 @@ NOW = int(time.time())
 
 def game(**kw) -> Game:
     base = dict(id="football/college-football:1", league="football/college-football",
-                name="Illinois Fighting Illini at Maryland Terrapins", short_name="ILL @ MD",
-                starts=NOW - 3600, state="in", detail="5:12 - 4th", home="Maryland", away="Illinois",
+                name="Harbor City Herons at Lakemont Lions", short_name="HC @ LAKE",
+                starts=NOW - 3600, state="in", detail="5:12 - 4th", home="Lakemont", away="Harbor City",
                 home_score="17", away_score="20", networks=["FS1"],
-                terms=["Illinois Fighting Illini", "Illinois", "Fighting Illini", "ILL", "Maryland"])
+                terms=["Harbor City Herons", "Harbor City", "Herons", "HC", "Lakemont"])
     base.update(kw)
     return Game(**base)
 
@@ -22,12 +22,12 @@ def game(**kw) -> Game:
 def test_network_matching():
     assert network_matches("FS1", "FOX SPORTS 1")
     assert not network_matches("FOX", "FOX SPORTS 1")
-    assert network_matches("FOX", "FOX 32 WFLD Chicago")
-    assert network_matches("FOX", "8 FOX 32 WFLD Chicago")
+    assert network_matches("FOX", "FOX 32 KDEM Lakemont")
+    assert network_matches("FOX", "8 FOX 32 KDEM Lakemont")
     assert network_matches("BTN", "BIG TEN NETWORK")
     assert network_matches("ESPN2", "ESPN 2")
     assert not network_matches("ESPN", "ESPNU")
-    assert network_matches("ABC", "ABC 7 WLS Chicago")
+    assert network_matches("ABC", "ABC 7 KTST Lakemont")
 
 
 def test_classify():
@@ -45,8 +45,8 @@ def test_link_games_by_network_and_time():
 
 
 def test_link_games_by_team_names_in_channel():
-    channels = {"1045": Channel("1045", "1045", "NCAAF 01: Illinois at Maryland 11am")}
-    airings = [Airing("1045", "NCAAF 01: Illinois at Maryland 11am", "", "filler", "sports", NOW - 9000, NOW + 9000)]
+    channels = {"1045": Channel("1045", "1045", "NCAAF 01: Harbor City at Lakemont 11am")}
+    airings = [Airing("1045", "NCAAF 01: Harbor City at Lakemont 11am", "", "filler", "sports", NOW - 9000, NOW + 9000)]
     assert 0 in link_games(airings, channels, [game(networks=[])])
 
 
@@ -55,7 +55,7 @@ def make_db():
     g = game()
     channels = [Channel("706", "706", "FOX SPORTS 1"), Channel("1050", "1050", "NCAAF 06: FS1"),
                 Channel("101", "101", "AMC")]
-    airings = [Airing("706", "Live: College Football", "", "From Maryland", "sports", NOW - 4000, NOW + 3000),
+    airings = [Airing("706", "Live: College Football", "", "From Lakemont", "sports", NOW - 4000, NOW + 3000),
                Airing("101", "Halloween", "", "Michael Myers", "movie", NOW + 600, NOW + 7800, 1978)]
     write_games(conn, [g])
     write_guide(conn, channels, airings, [g])
@@ -65,7 +65,7 @@ def make_db():
 
 def test_team_search_finds_channel():
     conn = make_db()
-    res = search.search_guide(conn, search.basic_filters("illini game"), NOW)
+    res = search.search_guide(conn, search.basic_filters("herons game"), NOW)
     assert res and res[0]["channels"][0]["vcn"] == "706"
     assert res[0]["game"]["away_score"] == "20" and res[0]["on_now"]
 
@@ -80,7 +80,7 @@ def test_library_and_people_search():
 def test_finished_game_still_found():
     conn = make_db()
     write_games(conn, [game(state="post", detail="Final")])
-    games = search.run(conn, search.basic_filters("is the illini game on"))["games"]
+    games = search.run(conn, search.basic_filters("is the herons game on"))["games"]
     assert games and games[0]["detail"] == "Final" and games[0]["away_score"] == "20"
 
 
@@ -161,13 +161,13 @@ def test_links():
     assert tune.live_link("706") == "plezy://live?channel=706&start=live"
     assert tune.live_link("706", "abc") == "plezy://live?channel=706&start=live&server=abc"
     assert tune.play_link("abc", "55") == "plezy://play?server=abc&id=55"
-    assert search.fts_query("what's on: the Illini game") == '"illini"*'
+    assert search.fts_query("what's on: the Herons game") == '"herons"*'
 
 
 def test_replayed_filters_are_validated():
     import pytest
-    f = search.parse_filters('{"text": "bears", "kinds": ["sports"], "max_minutes": 120, "on_now": true}')
-    assert f.text == "bears" and f.kinds == ["sports"] and f.max_minutes == 120 and f.on_now
+    f = search.parse_filters('{"text": "herons", "kinds": ["sports"], "max_minutes": 120, "on_now": true}')
+    assert f.text == "herons" and f.kinds == ["sports"] and f.max_minutes == 120 and f.on_now
     for bad in ('{"max_minutes": "' + "9" * 5000 + '"}', '{"max_minutes": 10000000}', '{"kinds": ["x"]}',
                 '{"text": ' + '"' + "a" * 300 + '"}', '{"scope": "everything"}', '[1, 2]', '{"max_minutes": true}'):
         with pytest.raises(ValueError):
@@ -230,8 +230,8 @@ def test_any_word_fallback_needs_most_words():
 
 
 def test_following_a_school_covers_its_other_college_sports_but_pro_ids_stay_in_their_league():
-    rows = [{"league": "football/college-football", "team_id": "356"}, {"league": "hockey/nhl", "team_id": "4"}]
+    rows = [{"league": "football/college-football", "team_id": "901"}, {"league": "hockey/nhl", "team_id": "4"}]
     keys = espn.followed_team_keys(rows)
-    assert espn.is_followed_game(keys, "basketball/mens-college-basketball", "356", "161")   # Illini hoops
+    assert espn.is_followed_game(keys, "basketball/mens-college-basketball", "901", "902")   # same school, other sport
     assert espn.is_followed_game(keys, "hockey/nhl", "1", "4")
     assert not espn.is_followed_game(keys, "basketball/nba", "4", "9")                     # a different team 4

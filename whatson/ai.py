@@ -56,7 +56,7 @@ the person's media library (movies and shows they own).
 - scope: "guide" for live TV questions ("on now", "what channel", "tonight", games), "library" for
   things to watch from their collection, "all" when unclear.
 - text: the distinctive search words only. Expand team nicknames to the school or city as well
-  ("illini" -> "illinois illini", "da bears" -> "chicago bears"). Leave out filler like "what's on"
+  ("gators" -> "florida gators", "niners" -> "san francisco 49ers"). Leave out filler like "what's on"
   and words already captured by other fields (mood, length, audience).
 - kinds: "sports" for games and matches, "movie" for films, "show"/"episode" for series. Empty if any.
 - genres: plain genre words (comedy, horror, documentary, animation) for a mood or genre.

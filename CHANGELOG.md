@@ -15,6 +15,9 @@ What changed in each version of WhatsOn, newest first.
 - **AI shows that it's working,** with a placeholder where its answer, picks or game recap will appear.
 - The bottom of Settings shows the version you're running, with a link to WhatsOn on GitHub.
 
+### Changed
+- The sample question in Settings → AI search now asks about a different team.
+
 ### Fixed
 - The theme picker's section no longer has a stray sideways scrollbar.
 
