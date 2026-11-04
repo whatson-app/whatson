@@ -118,6 +118,16 @@ dialog input, dialog select { padding: 10px; border-radius: 10px; border: 1px so
 .msg.ok { color: #2e9d57; }
 .msg.err { color: var(--live); }
 .spinner { color: var(--muted); padding: 12px 0; }
+.spinner:not(#lib-more)::before { content: ""; display: inline-block; vertical-align: -3px; margin-right: 8px; }
+.spin, .spinner:not(#lib-more)::before { width: 16px; height: 16px; flex: none; border: 2px solid currentColor;
+  border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+.spin { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) {
+  .spin, .spinner:not(#lib-more)::before, .search.busy button::after { animation-duration: 3s; }
+  .skel { animation: none; }
+}
 .device { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 10px 0;
   border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .device .d-name { font-weight: 600; }
@@ -192,6 +202,19 @@ a { color: var(--accent); }
 /* --- Search chips and AI answer ------------------------------------------------------------------- */
 .chips-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 2px 0 6px; }
 .chip.ai { background: color-mix(in srgb, #7c5cff 15%, var(--surface)); border-color: color-mix(in srgb, #7c5cff 40%, var(--border)); }
+.search-status { display: flex; align-items: center; gap: 8px; color: var(--muted); margin: 2px 2px 8px; font-size: 14px; }
+.search-status.err { color: var(--text); }
+.search-status[hidden] { display: none; }
+/* Keeps the button's width and colour, with the spinner in place of its label. */
+.search.busy button { position: relative; color: transparent; opacity: 1; }
+.search.busy button::after { content: ""; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border: 2px solid var(--accent-text);
+  border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+.ai-working { color: var(--muted); font-size: 14px; }
+.ai-line { display: flex; align-items: center; gap: 8px; }
+.skel-row { display: flex; gap: 10px; overflow: hidden; margin: 10px 0 16px; }
+.skel { flex: none; border-radius: 12px; background: var(--border); animation: pulse 1.6s ease-in-out infinite; }
+.skel-row.cards .skel { width: 240px; height: 96px; }
+.skel-row.posters .skel { width: 150px; height: 225px; }
 .answer { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin: 6px 0; }
 .spark, .why.ai { color: #7c5cff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.spark, .why.ai) { color: #a993ff; } }

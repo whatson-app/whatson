@@ -1,7 +1,7 @@
 // Library: Movies / TV shows poster grids with sort and genres; show pages with seasons;
 // suggestion rows (up next, tonight's pick).
 
-import { $, api, esc, fmtMins, openSheet, store, thumbUrl, toast } from "./core.js";
+import { $, ai, aiPlaceholder, api, esc, fmtMins, openSheet, store, thumbUrl, toast } from "./core.js";
 import { libNav, posterCard, row } from "./cards.js";
 
 const PAGE = 60;
@@ -75,6 +75,7 @@ async function loadPage() {
 }
 
 async function loadForYou(kind) {
+  if (ai.on) $("#lib-foryou").innerHTML = aiPlaceholder("AI is picking what to watch…", "posters");
   try {
     const s = await api("/api/suggest/library");
     const upNext = s.up_next.filter((u) => kind === "show" ? u.kind === "show" : u.kind === "movie" || s.up_next_source !== "trakt");
@@ -92,7 +93,10 @@ async function loadForYou(kind) {
         </div>${rest.length ? scroll(rest) : ""}`, { badge: s.ai ? "AI" : "" });
     }
     $("#lib-foryou").innerHTML = html;
-  } catch { /* optional */ }
+  } catch {  // optional
+    const box = $("#lib-foryou");
+    if (box) box.innerHTML = "";
+  }
 }
 
 export async function showMovie(rk) {

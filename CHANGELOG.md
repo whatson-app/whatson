@@ -4,6 +4,10 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Added
+- **Search shows that it's working,** with a spinning circle and a line saying what it's waiting for.
+- **AI shows that it's working,** with a placeholder where its answer, picks or game recap will appear.
+
 ## 0.2.0 - 2026-11-03
 
 ### Added
