@@ -1,4 +1,6 @@
-"""Settings → Server: which server the guide and library come from. One at a time; they aren't merged."""
+"""Settings → Server: which server the guide and library come from. One at a time; they aren't merged.
+
+Decisions: ADR 0012."""
 
 from __future__ import annotations
 

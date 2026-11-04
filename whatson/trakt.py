@@ -3,7 +3,9 @@ watch progress, calendar, recommendations). Each self-hoster registers their own
 (trakt.tv/oauth/applications) and pastes its client id and secret into Settings; a shared secret
 can't ship in open source.
 
-Everything is cached in the meta table, so suggestions never wait on Trakt."""
+Everything is cached in the meta table, so suggestions never wait on Trakt.
+
+Decisions: ADR 0018."""
 
 from __future__ import annotations
 

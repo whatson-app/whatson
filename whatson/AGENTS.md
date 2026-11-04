@@ -1,6 +1,7 @@
 # whatson/: the app
 
-Local rules for the server and front end. The top-level `AGENTS.md` comes first.
+Local rules for the server and front end. The top-level `AGENTS.md` comes first, including its rules on ADRs and docs.
+`docs/architecture.md` and `docs/frontend.md` describe what's here.
 
 **Server**
 

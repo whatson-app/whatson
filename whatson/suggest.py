@@ -1,5 +1,7 @@
 """Suggestion rows. Rules and Trakt choose the candidates; AI (when on) only re-orders them and writes
-a short "because" line. With AI off every row still fills, in rule order, with rule reasons."""
+a short "because" line. With AI off every row still fills, in rule order, with rule reasons.
+
+Decisions: ADR 0016, 0018."""
 
 from __future__ import annotations
 

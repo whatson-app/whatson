@@ -1,5 +1,7 @@
 """What a media server gives WhatsOn, whichever one it is: channels, listings, library items, what's
-playing, and the calls the routes need. WhatsOn reads one server at a time (Settings → Source)."""
+playing, and the calls the routes need. WhatsOn reads one server at a time (Settings → Server).
+
+Decisions: ADR 0012."""
 
 from __future__ import annotations
 
@@ -99,13 +101,34 @@ class Source(Protocol):
     label: str                     # as people see it
 
     @property
-    def configured(self) -> bool: ...
-    async def server_id(self) -> str: ...
-    async def load_guide(self, start: int, end: int) -> tuple[list[Channel], list[Airing]]: ...
-    async def library(self) -> list[LibraryItem]: ...
-    async def playing(self) -> list[Session]: ...
-    def valid_id(self, item_id: str) -> bool: ...
-    async def item(self, item_id: str) -> dict | None: ...
-    async def episodes(self, season_id: str) -> list[dict]: ...
-    async def up_next(self) -> list[dict]: ...
-    async def thumb(self, path: str, width: int) -> httpx.Response | None: ...
+    def configured(self) -> bool:
+        """Whether enough is saved to call the server. Background refresh and the busy check skip an unconfigured
+        source; other calls on one may raise."""
+
+    async def server_id(self) -> str:
+        """The id Plezy knows this server by; it goes into live and play links."""
+
+    async def load_guide(self, start: int, end: int) -> tuple[list[Channel], list[Airing]]:
+        """Channels, and listings overlapping this window (epoch seconds). Empty when the server has no Live TV."""
+
+    async def library(self) -> list[LibraryItem]:
+        """Every movie and show. Called on a slow timer; the result replaces the local copy."""
+
+    async def playing(self) -> list[Session]:
+        """What's playing now. The busy check relies on this, so it must say which TV each session is on."""
+
+    def valid_id(self, item_id: str) -> bool:
+        """Whether this looks like one of the server's ids. The library routes check this before calling the server."""
+
+    async def item(self, item_id: str) -> dict | None:
+        """A movie or show's details for its page, with seasons for a show. None when the server returns nothing."""
+
+    async def episodes(self, season_id: str) -> list[dict]:
+        """A season's episodes."""
+
+    async def up_next(self) -> list[dict]:
+        """What to carry on watching, as library cards."""
+
+    async def thumb(self, path: str, width: int) -> httpx.Response | None:
+        """Fetch artwork for /api/thumb. Must accept only exact artwork paths and return None for anything else, so
+        the proxy can't reach the rest of the server with its token."""

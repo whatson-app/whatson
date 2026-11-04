@@ -11,4 +11,6 @@ Local rules for tests. The top-level `AGENTS.md` comes first.
 - **`tests/test_guards.py` is not yours to change.** It encodes the rules in `AGENTS.md`. If it fails, the change is
   wrong; if the rule itself must change, say so in an issue first. Don't loosen an assertion, add a skip or widen an
   allowlist to get past it.
+- **`tests/test_docs.py` keeps the docs true to the code.** If it fails, fix the docs. A new test file goes in
+  `docs/testing.md`.
 - Run one file with `python -m pytest -q tests/test_x.py`; everything with `python scripts/check.py`.

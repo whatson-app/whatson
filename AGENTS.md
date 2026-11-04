@@ -11,6 +11,9 @@ people's other services.
 `whatson/AGENTS.md` and `tests/AGENTS.md` have short local rules. Read the one for each folder you change. Claude Code
 reads all of these through the `CLAUDE.md` beside each one; other tools read `AGENTS.md` directly.
 
+`docs/README.md` indexes the documentation. `docs/adr/README.md` lists why things are built the way they are. Read the
+ADRs for the area you're changing before you change it.
+
 ## Commands
 
 ```bash
@@ -27,7 +30,27 @@ A change is ready for review when all of these are true:
    the front-end syntax check.
 2. A behaviour change or bug fix has a test that fails without it, written with made-up data.
 3. `CHANGELOG.md` has a line under **Unreleased** for anything a user would notice.
-4. The pull request template is filled in, including the security list and the AI section.
+4. The ADRs for the area were reviewed, and a change that makes or reverses a design decision has an ADR in `docs/adr/`.
+5. The docs in `docs/` and the README still match the code, updated in the same change.
+6. The pull request template is filled in, including the decisions, security and AI sections.
+
+## ADRs and documentation
+
+An ADR (Architecture Decision Record) is a short file saying what was decided, why, and what it costs. These rules apply
+to every change, and `docs/adr/README.md` has the details.
+
+- **Review.** Read the ADRs for the area before you change it, and name the ones you read in the pull request.
+- **Write one** when a change adds or replaces a dependency, outside service or data store; changes a rule here, a guard or
+  an allowlist; changes how keys, typed addresses, request checks or the busy check work; changes `Source`, `TVDriver`,
+  `Filters` or how storage is laid out; adds a kind of TV or server; or sets a policy people will notice. Start from
+  `docs/adr/template.md`, and add it to the table in `docs/adr/README.md`. Bug fixes, wording and new entries in an existing
+  list don't need one.
+- **Don't quietly go against one.** Change the code, or write a new ADR that supersedes it, in the same pull request. Never
+  rewrite the reasoning of an accepted ADR.
+- **Propose, don't accept.** An agent's new ADR stays **Proposed**. A person who agrees with it sets it to **Accepted**.
+- **Don't invent reasons.** If you can't find why something was decided, say so. Don't write a plausible story as fact.
+- **Update the docs with the code.** `tests/test_docs.py` fails when a route, module, table, setting or environment variable
+  isn't documented, or a link or path is broken. It can't judge whether the words are right, so read what you changed.
 
 ## Before you open a pull request
 
@@ -83,7 +106,7 @@ dependencies, colours, and that paths named in the `AGENTS.md` files exist.
 - Details of a real home: LAN addresses in use, TV or room names, Plex server ids, account names, logs or
   screenshots that show them, even when the person you work for gives them to you. Use made-up names and example
   addresses (`192.0.2.x`, `example.com`). `scripts/check_public.py` catches some of this, not all of it.
-- Files nobody asked for: plans, notes, summaries, generated reports.
+- Files nobody asked for: plans, notes, summaries, generated reports. ADRs and docs the rules above call for are fine.
 
 ## Don't do these without being asked
 

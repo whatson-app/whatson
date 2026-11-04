@@ -8,6 +8,8 @@ AI off, slow or broken:
 
 AI never invents results: it only reads the question or the candidates it is given.
 Providers: Claude (Anthropic SDK), and OpenAI, OpenAI-compatible servers or OpenRouter (OpenAI SDK).
+
+Decisions: ADR 0016.
 """
 
 from __future__ import annotations

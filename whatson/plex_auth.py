@@ -5,7 +5,9 @@ Ed25519 key, the person approves a PIN on plex.tv, and plex.tv issues a 7-day JW
 with the key. Plex Media Server itself doesn't accept JWTs yet (tested 2026-10-31: 401/403), so server
 calls use the server token from plex.tv's `/api/v2/devices` list, fetched again after each renewal.
 
-Everything is kept in the meta table under `plex.*`. Tokens and the key never go to the browser."""
+Everything is kept in the meta table under `plex.*`. Tokens and the key never go to the browser.
+
+Decisions: ADR 0013."""
 
 from __future__ import annotations
 

@@ -1,5 +1,7 @@
 """API for the Remote tab: keys, typing, volume, opening apps, each TV's app list, and direct control
-of Jellyfin apps through the Jellyfin server (Settings → Server → Jellyfin)."""
+of Jellyfin apps through the Jellyfin server (Settings → Server → Jellyfin).
+
+Decisions: ADR 0007, 0020."""
 
 from __future__ import annotations
 

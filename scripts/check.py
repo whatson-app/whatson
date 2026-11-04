@@ -2,7 +2,7 @@
 and AI agents alike: when this prints "all checks passed", the change is ready for review.
 
     python scripts/check.py            # everything
-    python scripts/check.py --quick    # skip the full test suite (the guard tests still run)
+    python scripts/check.py --quick    # skip the full test suite (the guard and docs tests still run)
 
 Node.js is optional: without it the front-end syntax check is skipped with a note, and CI still runs it."""
 from __future__ import annotations
@@ -20,6 +20,7 @@ PY = sys.executable
 def steps(quick: bool) -> list[tuple[str, list[list[str]]]]:
     out = [
         ("guard tests (rules in AGENTS.md)", [[PY, "-m", "pytest", "-q", "tests/test_guards.py"]]),
+        ("docs match the code (ADRs, links, reference pages)", [[PY, "-m", "pytest", "-q", "tests/test_docs.py"]]),
         ("nothing private in tracked files", [[PY, "scripts/check_public.py"]]),
     ]
     if not quick:

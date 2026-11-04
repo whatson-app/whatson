@@ -1,5 +1,7 @@
 """Turning a search result into something playing on a TV: Plezy app links plus a check that
-the TV is not already in use (a link replaces whatever is playing)."""
+the TV is not already in use (a link replaces whatever is playing).
+
+Decisions: ADR 0010, 0011."""
 
 from __future__ import annotations
 

@@ -7,6 +7,8 @@ What changed in each version of WhatsOn, newest first.
 ### Added
 - **A Plex Home user for each TV:** choose who watches on each TV in ⚙ → TVs. Picking that TV shows their Up Next and
   watched status, and anything you start plays as them in Plezy.
+- **Documentation** in `docs/`: architecture, API, data model, configuration, integrations, front end and testing, plus
+  decision records (ADRs) for WhatsOn's design. Contributors now write and review ADRs as part of their changes.
 
 ## 0.2.1 - 2026-11-03
 

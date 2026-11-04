@@ -3,7 +3,9 @@
 A TV can't list its installed apps over the remote protocol, so each TV's list is built from apps
 WhatsOn has seen in front on it, plus the ones the person ticks. Apps open by link where one is known;
 otherwise by package name, which Google TV refuses (Aug 2026 Play Store update) but older Android TV
-devices such as the Shield may still accept."""
+devices such as the Shield may still accept.
+
+Decisions: ADR 0020."""
 
 from __future__ import annotations
 
