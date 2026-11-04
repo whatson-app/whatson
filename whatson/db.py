@@ -1,5 +1,7 @@
 """SQLite storage. Guide, library and games are rebuilt wholesale on each refresh;
-devices are the only long-lived rows."""
+what people set up (TVs, follows, favorites, settings) is long-lived.
+
+Decisions: ADR 0005."""
 
 from __future__ import annotations
 

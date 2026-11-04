@@ -2,6 +2,8 @@
 
 Guide listings rarely name the teams ("Live: College Football"), so games are matched
 to airings by network and kickoff, which is what makes a team name find the right channel.
+
+Decisions: ADR 0014.
 """
 
 from __future__ import annotations

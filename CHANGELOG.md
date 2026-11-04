@@ -4,6 +4,10 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Added
+- **Documentation** in `docs/`: architecture, API, data model, configuration, integrations, front end and testing, plus
+  decision records (ADRs) for WhatsOn's design. Contributors now write and review ADRs as part of their changes.
+
 ## 0.2.1 - 2026-11-03
 
 ### Changed

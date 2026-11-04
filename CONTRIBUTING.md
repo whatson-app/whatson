@@ -9,6 +9,26 @@ since only Google TV / Android TV works today.
 - **Anything bigger:** open an issue first, so nobody spends time on something that won't be merged.
 - **Security problems:** see [SECURITY.md](SECURITY.md), and please don't open a public issue.
 - **Not planned:** a login and a Seerr add mode. Trakt is out of the interface for now.
+- **Read the decisions first:** [docs/adr/](docs/adr/README.md) says why things are built the way they are. It's worth
+  a look before you propose changing them.
+
+## Decisions and documentation
+
+Every contributor makes and reviews ADRs (Architecture Decision Records) as part of their code. An ADR is a short file saying
+what was decided, why, and what it costs.
+
+- **Review the ADRs** for the area you're changing, and name them in your pull request. Reviewers check the code against them.
+- **Write an ADR** in the same pull request when your change makes or reverses a design decision: a dependency or outside
+  service, a security rule or guard, a contract like `Source` or `TVDriver`, how data is stored, or a policy people will
+  notice. [When an ADR is needed](docs/adr/README.md#when-an-adr-is-needed) has the full list. A bug fix, wording, or a new
+  entry in an existing list doesn't need one.
+- **If your code goes against an ADR,** change the code or supersede the ADR. Accepted ADRs aren't rewritten; a new one replaces
+  them.
+- **Update the docs with the code.** [docs/](docs/README.md) describes how things work now. If your change makes a page wrong,
+  fix it in the same pull request. `tests/test_docs.py` catches a missing route, module, table, setting or environment
+  variable, and broken links.
+- **Comments and docstrings** explain why, not what. The public contracts, like `Source` and `TVDriver`, say what each method
+  must do.
 
 ## Using AI
 
@@ -46,7 +66,7 @@ with no build step, so reloading the page picks up changes.
 Run this before you open a pull request. CI runs the same command:
 
 ```bash
-.venv/bin/python scripts/check.py            # tests, guard tests, privacy check, JS syntax
+.venv/bin/python scripts/check.py            # tests, guard tests, docs, privacy check, JS syntax
 .venv/bin/python scripts/check.py --quick    # the same without the full test suite, while you work
 ```
 
@@ -71,6 +91,9 @@ whole history for secrets with gitleaks.
 | `whatson/apps.py` | Apps the Remote tab knows about |
 | `whatson/safe_http.py` | The rules for addresses people type in Settings |
 | `whatson/static/` | Front end: `index.html`, `style.css`, one module per section in `js/` |
+| `docs/` | How it works now, and `docs/adr/` for why |
+
+[docs/architecture.md](docs/architecture.md) covers every module and the main flows.
 
 ## Common additions
 
@@ -102,9 +125,10 @@ test for that last rule.
 
 ### A database column
 
-Add it to `SCHEMA` in `whatson/db.py`. Guide, library and games are rebuilt on each refresh, so those tables
-are dropped and recreated when the column named in `want` is missing. Long-lived tables like `devices` need
-an `ALTER TABLE` in `connect()`, or existing installs will break.
+Add it to `SCHEMA` in `whatson/db.py`. The library and games are rebuilt on each refresh, so those tables are
+dropped and recreated when the column named in `want` is missing. Long-lived tables like `devices` need an
+`ALTER TABLE` in `connect()`, or existing installs will break. See [docs/data-model.md](docs/data-model.md), which also
+needs the new table or setting.
 
 ### A screen or section
 
@@ -116,6 +140,7 @@ outside, call the server through `api()`, and check it at phone width and in lig
 - Keep each one to a single change, and fill in the template.
 - Every behaviour change or bug fix needs a test that fails without it. Tests don't use the network or real TVs.
 - Add a line to `CHANGELOG.md` under **Unreleased** for anything a user would notice.
+- Include any ADR and docs changes (see [Decisions and documentation](#decisions-and-documentation)).
 - All checks must pass; CI runs `scripts/check.py`, the privacy checks and a Docker build that starts the image.
 - A maintainer reviews every pull request. Anything that handles keys, calls addresses people type, changes the
   request checks, takes over a TV or talks to Radarr or Sonarr gets a closer look (see `.github/CODEOWNERS`).

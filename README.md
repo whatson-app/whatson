@@ -187,6 +187,11 @@ DATA_DIR=./data .venv/bin/uvicorn whatson.app:app --reload    # then ⚙ → Ser
 New TV types implement `whatson/devices/base.py:TVDriver` and register in `whatson/app.py`.
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Documentation
+
+[docs/](docs/README.md) covers the architecture, API, data model, configuration and integrations.
+[docs/adr/](docs/adr/README.md) records why WhatsOn is built the way it is.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

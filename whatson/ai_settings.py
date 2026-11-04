@@ -1,7 +1,9 @@
 """AI settings edited from the web UI. Values saved in the database win; environment variables
 (AI_PROVIDER, AI_MODEL, AI_BASE_URL, *_API_KEY) are the fallback, so existing .env setups keep working.
 
-Keys are stored in the app's SQLite file (chmod 600) and never sent back to the browser in full."""
+Keys are stored in the app's SQLite file (chmod 600) and never sent back to the browser in full.
+
+Decisions: ADR 0007, 0016."""
 
 from __future__ import annotations
 

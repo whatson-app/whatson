@@ -4,7 +4,9 @@ Settings live in the meta table, edited from the Downloads tab. RADARR_URL/RADAR
 SONARR_URL/SONARR_KEY in the environment are the fallback. As with the AI keys, a saved key only
 goes to the address it was saved with, and keys never go back to the browser.
 
-Everything here stays additive: WhatsOn adds and searches, it never edits or deletes in Radarr/Sonarr."""
+Everything here stays additive: WhatsOn adds and searches, it never edits or deletes in Radarr/Sonarr.
+
+Decisions: ADR 0007, 0017."""
 
 from __future__ import annotations
 

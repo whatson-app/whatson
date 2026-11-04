@@ -1,5 +1,7 @@
 """Android TV / Google TV over the Android TV Remote protocol v2 (the protocol the Google TV
-phone remote uses). No ADB or developer mode: pairing is a one-time code shown on the TV."""
+phone remote uses). No ADB or developer mode: pairing is a one-time code shown on the TV.
+
+Decisions: ADR 0009."""
 
 from __future__ import annotations
 

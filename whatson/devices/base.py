@@ -1,5 +1,7 @@
 """What every TV driver provides. Phase 1 ships Android TV / Google TV; Roku, Fire TV and
-others plug in here later."""
+others plug in here later.
+
+Decisions: ADR 0009."""
 
 from __future__ import annotations
 
@@ -63,7 +65,8 @@ class TVDriver(Protocol):
         """Complete pairing with the code shown on the TV; raises a PairingError subclass."""
 
     async def status(self, host: str) -> TVStatus:
-        ...
+        """Whether the TV answers, is on, and which app is in front. Never raises for an unreachable TV: the busy
+        check reads `reachable` and `error`."""
 
     async def send_key(self, host: str, key: str, direction: str = "SHORT") -> None:
         """Press a remote key (DPAD_UP, MEDIA_PLAY_PAUSE, VOLUME_UP, ...); START_LONG/END_LONG hold it."""
