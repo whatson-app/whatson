@@ -5,8 +5,6 @@
 
 ## Context
 
-This isn't built yet. The approach was tested on one TV, as described under [What testing found](#what-testing-found).
-
 WhatsOn talks to Plex with one token, normally the server owner's. Plex ties watched status and On Deck to the token, so
 everyone sees the owner's history, whoever is watching (ADR 0019). Jellyfin doesn't have this problem, because one key can
 ask for any user's data.
@@ -46,14 +44,23 @@ The owner's token keeps the guide, the library list and the busy check. The user
 watched status and Up Next. It's a saved key like any other (ADR 0007): never sent to the browser, and only sent to the
 address it was saved with, with a test.
 
-**Code.** Per-user reads go behind the `Source` protocol, and anything cached per user is keyed by user. `library.watched`
-and `library.viewed_leaf_count` hold one value per item, and the unwatched filter and Tonight's pick read them, so
-per-user status needs its own table or a read from Plex. That choice is left to the implementation.
+**Reading as a user.** Requests from the page name the selected TV. `whatson/plex_users.py` turns that into the TV's user,
+and only while Plex is the source. It's Plex-specific because only Plex ties this data to a token, so the `Source` protocol
+doesn't change.
+
+- **Up Next and a title's details** are read from Plex as that user each time. A refused token is replaced once, because
+  Plex gives no expiry date.
+- **Watched status in lists** comes from a `user_watched` table, since `library.watched` holds one value per item. It's
+  filled when a user is chosen and then as often as the library refreshes. This covers the library grid, the unwatched
+  filter, search results and the picks.
+- **A title Plex hides from the user** still opens, from the owner's view, with a note that it may not play.
+- **PIN-protected users can't be chosen.** The switch needs the PIN, and WhatsOn doesn't collect PINs.
 
 ## What testing found
 
-Tested on 2026-11-03 on one Android TV device running Plezy 2.25.0, with an unprotected, restricted second Plex Home user.
-The user was read from Plex's own session report, not from the screen, so nobody confirmed the picture.
+Tested on 2026-11-03, before the feature was built, using test scripts on one Android TV device running Plezy 2.25.0, with
+an unprotected, restricted second Plex Home user. The user was read from Plex's own session report, not from the screen, so
+nobody confirmed the picture.
 
 | Link sent | User Plex reported | Time to appear |
 |---|---|---|
@@ -78,22 +85,27 @@ From plex.tv and the Plex server:
   has to allow for that.
 - **Progress:** plays of up to about 15 seconds left no resume point or watched mark for either user.
 
-**Not tested:** a PIN-protected profile, a Plezy version without `profile=`, a TV where Plezy has no profile for the user,
-starting a title a restricted user can't see, tokens from Sign in with Plex (the test used a `PLEX_TOKEN`), revoking a
-user's token, or how long the token lasts.
+**Not tested:** the finished feature against a real Plex server or TV (it was tested with fakes), a PIN-protected profile, a
+Plezy version without `profile=`, a TV where Plezy has no profile for the user, opening or starting a title a restricted user
+can't see, tokens from Sign in with Plex (the test used a `PLEX_TOKEN`), revoking a user's token, or how long the token
+lasts.
 
 ## Consequences
 
 - A TV's history and Plezy's profile agree, so progress goes to the person WhatsOn shows.
 - **The profile sticks.** A switch lasts after the link, so a TV with no user set stays on whichever profile was last used,
   and pressing play overrides a profile someone chose by hand in Plezy.
-- **An unknown user fails silently.** WhatsOn has to wait for the title to appear and then say it didn't start. The wait
-  should allow for Live TV taking at least 12 seconds here.
+- **An unknown user fails silently.** After a link naming a user, the page checks for about 25 seconds that the title
+  appeared, and says if it didn't. Live TV took 11 to 12 seconds to appear in testing.
 - **Restricted users aren't a parental control in WhatsOn.** The library is listed with the owner's token, so that TV can
-  show titles Plex hides from the user. The app has to say so plainly.
-- **PIN-protected profiles** should still ask for the PIN on the TV, according to Plezy's code.
+  show titles Plex hides from the user. Settings → TVs says so.
+- **Ticks can lag.** Watched status in lists is only as fresh as the last library refresh (6 hours by default), as the
+  owner's already is. Up Next and a title's details are current.
+- **Some things still follow one account:** Trakt suggestions, which a TV with its own user skips, and the "watched" note
+  given to the AI for its one-line answers, which stays the owner's.
+- **PIN-protected users** can't have their history shown or be named in links from WhatsOn.
 - **Older Plezy versions** may ignore `profile=`, and progress would go to the active profile. WhatsOn can only learn the
-  version from a session, so the setup steps have to mention it.
+  version from a session, so the README mentions it.
 - **More keys to protect:** two saved tokens per user in the data folder, and one device entry on each user's Plex account.
 - **Identifies a TV, not a person.** It needs no login and doesn't reopen ADR 0002, but anyone can change the setting. Once
   accepted, this replaces the part of ADR 0019 about whose history Plex shows.
@@ -110,5 +122,6 @@ user's token, or how long the token lasts.
 
 ## Where it lives
 
-Nothing yet. It would touch `whatson/tune.py`, `whatson/plex_auth.py`, `whatson/sources/base.py`, `whatson/sources/plex.py`
-and `whatson/db.py`. Related: ADR 0002, ADR 0007, ADR 0010, ADR 0011, ADR 0013, ADR 0019.
+`whatson/plex_users.py`, `whatson/plex_auth.py`, `whatson/tune.py`, `whatson/sources/plex.py`, `whatson/db.py`,
+`whatson/static/js/settings.js`, `tests/test_plex_users.py`. Related: ADR 0002, ADR 0007, ADR 0010, ADR 0011, ADR 0013,
+ADR 0019.
