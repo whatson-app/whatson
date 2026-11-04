@@ -1,6 +1,17 @@
-# WhatsOn
+<p align="center"><img src="whatson/static/icon-512.png" width="96" alt=""></p>
 
-Search what's on Live TV and in your Plex or Jellyfin library, then put it on a TV with one tap.
+<h1 align="center">WhatsOn</h1>
+
+<p align="center">Search what's on Live TV and in your Plex or Jellyfin library, then put it on a TV with one tap.</p>
+
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#settings-at-a-glance">Settings</a> ·
+  <a href="#run-it">Run it</a> ·
+  <a href="#security">Security</a>
+</p>
+
+![A search for a team name, with its live game, the score and a button to tune the channel](docs/screenshots/search.png)
 
 Live TV guides are hard to search: you can't type "gators" and find the game, because guide
 listings say "Live: College Football". WhatsOn reads your server's guide, matches sports listings to
@@ -11,45 +22,103 @@ it tunes the channel or starts the movie there.
 > that app, and Plezy has to be signed in to the same server. Without it, WhatsOn can search and work as a
 > remote, but it can't start anything. See [Requirements](#requirements).
 
-## What it does
+The titles, channels, teams and artwork in these screenshots are made up for the demo.
+
+## Features
+
+### Search
+
+One search bar across live TV, games, your library and titles you could get.
+
+- Type a title or a team to find it, wherever it is.
+- Type a channel number to jump to that channel in the guide.
+
+### Live TV
 
 ![The Live TV guide: a search bar, picks for what's on now, and a channel grid](docs/screenshots/live.png)
 
-| Library | Show page |
+- A guide grid on a computer, and a now and next list on a phone.
+- Favorite channels, and filters for sports, movies and shows.
+- A row of what's on now, picked for you.
+
+### Library
+
+| Browse | Show page |
 |---|---|
 | ![Up next and a poster grid of TV shows](docs/screenshots/library.png) | ![A show's seasons and episodes, each with a play button](docs/screenshots/show.png) |
 
-| Sports | Remote | On a phone |
+- Movies and TV shows as posters, with sort, genres and an unwatched filter.
+- Show pages with seasons and episodes.
+- "Up next" from your server, and a pick for tonight.
+
+### Sports
+
+![Followed teams with live scores, and a different close game worth switching to](docs/screenshots/sports.png)
+
+- Your teams pinned on top, with live scores, the last result and the next game.
+- Following a college team covers that school's football and basketball.
+- Each league you follow gets its own tab.
+- Close games worth switching to, and "Catch me up" recaps.
+- Scores refresh every 30 seconds while a team or league you follow is playing.
+
+### Remote and tuning
+
+| Remote | On a phone, light | On a phone, dark |
 |---|---|---|
-| ![Followed teams with live scores and a close game worth switching to](docs/screenshots/sports.png) | ![A TV remote with a d-pad, playback, volume and channel buttons](docs/screenshots/remote.png) | ![The library at phone width, in light mode](docs/screenshots/phone-light.jpg) |
+| <img src="docs/screenshots/remote.png" alt="A TV remote with a d-pad, playback, volume and channel buttons"> | <img src="docs/screenshots/phone-light.jpg" width="220" alt="The library at phone width, in light mode"> | <img src="docs/screenshots/phone-search.jpg" width="220" alt="Search results at phone width, in dark mode"> |
 
-The titles, channels, teams and artwork in these screenshots are made up for the demo.
+- **Now playing:** a bar for the TV you picked, with what's on it, progress, pause and stop.
+- **Remote:** power, d-pad, playback, volume, channels, typing, and an app row per TV. A TV can't list its
+  installed apps, so the row learns what it sees in front and lets you tick the rest.
+- **Tuning:** opens the channel or title in [Plezy](https://github.com/edde746/plezy) on the TV. If something is
+  already playing there, WhatsOn asks before taking over.
 
-One search bar across everything (live TV, games, your library, titles you could get), four sections,
-and a **now playing** bar for the TV you picked (what's on it, progress, pause and stop).
+## Optional extras
 
-- **Search**: type a title, a team or a channel number (which jumps to that channel in the guide).
-  With AI on, you can ask in plain words.
-- **Live TV**: a guide grid (desktop) or now/next list (phone), favorite channels, filters for sports,
-  movies and shows, and a row of what's on now, picked for you.
-- **Library**: Movies and TV shows as posters with sort, genres and an unwatched filter; show pages with
-  seasons and episodes; "up next" from your server and a pick for tonight.
-- **Remote**: power, d-pad, playback, volume, channels, typing, and an app row per TV.
-  A TV can't list its installed apps, so the row learns what it sees in front and lets you tick the rest.
-- **Get movies and shows you don't have (optional)**: connect Radarr and/or Sonarr in ⚙ → More → Downloads.
-  Searches then add rows of matching titles you don't own; one tap opens a sheet to add
-  it (quality, folder, which episodes, anime routing pre-filled from your settings) and start a search.
-  Library → Downloads follows each title through downloading until it's in your library, then it's a Play button.
-  WhatsOn only adds and searches; it never edits or deletes anything in Radarr or Sonarr. A switch in
-  ⚙ → More → Downloads turns adding off; while it's on, anyone who can open WhatsOn can add.
-- **Sports**: follow leagues and teams; your teams pinned on top with live scores, last result and next
-  game (following a college team covers that school's football and basketball); close games worth switching to; "catch me up" recaps; scores refresh every 30 s while you follow a live game.
-- **AI (optional)**: Claude, OpenAI, OpenRouter, or a local OpenAI-compatible server (LM Studio, Ollama).
-  It reads questions like "something funny the kids and I can watch tonight, under 2 hours" into filters
-  you can edit as chips, writes a one-line answer from the matches only, ranks suggestions with a reason,
-  and summarizes games. It never invents results, and everything works without it.
-- **Tune a TV**: opens the channel or title in [Plezy](https://github.com/edde746/plezy) on the TV.
-  Before taking over a TV it checks whether something is already playing there and asks first.
+WhatsOn works without either of these.
+
+### AI search
+
+![A plain-language question read into filter chips, with a one-line answer and matching movies](docs/screenshots/ai-search.png)
+
+Use Claude, OpenAI, OpenRouter, or a local OpenAI-compatible server (LM Studio, Ollama). Set it up in ⚙ → More → AI search.
+
+- Ask in plain words. A question like "something funny the kids and I can watch tonight, under 2 hours" becomes
+  filters you can edit as chips.
+- It writes a one-line answer from the matches only, ranks suggestions with a reason, and summarizes games.
+- It never invents results.
+
+### Get movies and shows you don't have
+
+| Add a title | Follow its download |
+|---|---|
+| ![A sheet for adding a movie, with quality and folder already chosen](docs/screenshots/get.png) | ![Library → Downloads: titles with their progress and status](docs/screenshots/downloads.png) |
+
+Connect Radarr, Sonarr or both in ⚙ → More → Downloads.
+
+- Searches add rows of matching titles you don't own, unless the question was only about live TV.
+- One tap opens a sheet to add a title and start a search. Quality, folder, which episodes and anime routing are
+  filled in from your settings.
+- Library → Downloads follows each title until it's in your library, then it's a Play button.
+- WhatsOn only adds and searches. It never edits or deletes anything in Radarr or Sonarr.
+- A switch in ⚙ → More → Downloads turns adding off. While it's on, anyone who can open WhatsOn can add.
+
+## Settings at a glance
+
+Everything is set up in the web page, under ⚙.
+
+| Where | What it gives you | Do you need it? |
+|---|---|---|
+| **Server** | Connect Plex or Jellyfin and choose which to use. WhatsOn reads one at a time. Jellyfin can also just power the Remote tab, while Plex stays your source. | Yes |
+| **TVs** | Add and pair TVs, rename them, and check whether one is on and free to tune. | To tune or use the remote |
+| **Sports** | Follow leagues and teams. | Optional |
+| **More → AI search** | Choose a provider and model, then try a question to test it. | Optional |
+| **More → Downloads** | Connect Radarr and Sonarr, set default folders and quality, and turn adding on or off. | Optional |
+| **More → Appearance** | Match your device, or always use light or dark. Saved per browser, so each phone or computer can differ. | Optional |
+
+| Adding a TV | Sports settings |
+|---|---|
+| ![The Add a TV steps: pick a TV found on your network, or enter its IP address](docs/screenshots/pair.png) | ![Settings → Sports: league checkboxes and a team search](docs/screenshots/settings-sports.png) |
 
 ## Requirements
 
@@ -60,6 +129,9 @@ and a **now playing** bar for the TV you picked (what's on it, progress, pause a
 
 ## Run it
 
+> **There is no login.** Keep WhatsOn on your home network. Don't port-forward it or put it behind a public reverse
+> proxy. See [Security](#security).
+
 With the prebuilt image (amd64 and arm64, so a 64-bit Raspberry Pi works):
 
 ```bash
@@ -69,29 +141,61 @@ curl -fsSL https://raw.githubusercontent.com/whatson-app/whatson/main/.env.examp
 docker compose up -d
 ```
 
+The container uses host networking so it can reach TVs on your LAN. Then:
+
+1. Open `http://<host>:8430`.
+2. The first time, ⚙ **Server** opens. Choose Plex or Jellyfin and [connect it](#connect-your-server).
+3. In ⚙ **TVs**, press **Add a TV** and pick your TV from the ones WhatsOn finds on your network. If it isn't
+   listed, enter its IP address.
+4. Type the code the TV shows. Pairing uses the Android TV Remote protocol (the one the Google TV phone app uses);
+   no developer mode or ADB is needed.
+5. Open Plezy on the TV to test it. WhatsOn tells you if Plezy didn't open.
+
 Update later with `docker compose pull && docker compose up -d`. To pin a version, change `latest` in
 `compose.yaml` to a [release number](https://github.com/whatson-app/whatson/pkgs/container/whatson).
 
-Or build it yourself from a checkout:
+<details>
+<summary><b>Build it yourself</b></summary>
+
+From a checkout:
 
 ```bash
 cp .env.example .env
 docker compose up -d --build
 ```
 
-Open `http://<host>:8430`. The first time, ⚙ **Server** opens: choose Plex or Jellyfin and connect it
-(see [Connecting to Plex](#connecting-to-plex) and [Connecting to Jellyfin](#connecting-to-jellyfin)).
-Then in ⚙ **TVs**: add each TV by IP address, press **Pair**
-and type the code the TV shows. Pairing uses the Android TV Remote protocol (the one the Google TV
-phone app uses); no developer mode or ADB is needed.
+</details>
 
-The container uses host networking so it can reach TVs on your LAN.
+<details>
+<summary><b>Run it on Unraid</b></summary>
 
-**On Unraid,** use the Docker template: copy [`deploy/unraid/whatson.xml`](deploy/unraid/whatson.xml) to
+Use the Docker template: copy [`deploy/unraid/whatson.xml`](deploy/unraid/whatson.xml) to
 `/boot/config/plugins/dockerMan/templates-user/my-whatson.xml`, then go to Docker → Add Container and pick
 **whatson**. The container then shows like any other Unraid app (update check, autostart, Edit), not as "3rd Party".
 
-## Connecting to Plex
+</details>
+
+<details>
+<summary><b>Settings in <code>.env</code></b></summary>
+
+You can set Plex, Radarr, Sonarr and AI search in ⚙ instead, and values saved there win over `.env`. The others
+are only set here. [`.env.example`](.env.example) explains each one.
+
+| Setting | What it's for |
+|---|---|
+| `ALLOWED_HOSTS` | Host names you open WhatsOn by, if you use a DNS name or a reverse proxy. IP addresses and `localhost` always work. |
+| `GUIDE_HOURS`, `GUIDE_REFRESH_MINUTES`, `LIBRARY_REFRESH_MINUTES`, `SPORTS_REFRESH_MINUTES` | How far ahead the guide reads, and how often each thing refreshes. |
+| `ESPN_LEAGUES` | The leagues to read scores for. |
+| `PLEX_URL`, `PLEX_TOKEN` | Connect Plex without the web page. |
+| `RADARR_URL`, `RADARR_KEY`, `SONARR_URL`, `SONARR_KEY` | Connect Radarr and Sonarr. |
+| `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL`, `AI_TIMEOUT`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY` | Set up AI search. |
+
+</details>
+
+## Connect your server
+
+<details>
+<summary><b>Plex</b></summary>
 
 Three ways, in the order WhatsOn prefers them:
 
@@ -108,7 +212,10 @@ Be aware: if you own the server, any of these tokens can do everything you can o
 reads (guide, library, sessions, artwork), but nothing on Plex's side limits it to that. A friend's
 shared account gets only what you shared with them.
 
-## Connecting to Jellyfin
+</details>
+
+<details>
+<summary><b>Jellyfin</b></summary>
 
 1. In ⚙ → Server → Jellyfin, enter the server address and an API key (Jellyfin → Dashboard → API Keys).
 2. Choose the user whose watched status and up next to show. WhatsOn shows one user for the whole household.
@@ -122,12 +229,14 @@ shared account gets only what you shared with them.
 Be aware: a Jellyfin API key has full access to the server. WhatsOn only reads from it, apart from the
 Remote tab's playback commands, but nothing on Jellyfin's side limits it to that.
 
+Some things depend on the server's guide data: Live TV's Movies and Shows filters need listings marked that
+way, and a channel with no listings shows as "No listing". Plezy can't rewind Live TV from Jellyfin.
+
+</details>
+
 WhatsOn reads one server at a time, and doesn't merge the two. Switching in ⚙ → Server reloads the guide and
 library and clears favorite channels, because the other server's channels have different ids. The busy check
 only sees the server in use, so it won't notice Plezy playing from the other one.
-
-Some things depend on the server's guide data: Live TV's Movies and Shows filters need listings marked that
-way, and a channel with no listings shows as "No listing". Plezy can't rewind Live TV from Jellyfin.
 
 ## Which apps can play
 
@@ -160,7 +269,10 @@ without one (Jellyfin, Kodi) may not open from the app row on Google TV; older A
   LAN and loopback are fine, cloud-metadata and link-local addresses are refused, and redirects aren't
   followed, so a saved key only ever goes to the server it was saved for.
 
-## How tuning works
+## How it works
+
+<details>
+<summary><b>How tuning works</b></summary>
 
 WhatsOn sends the TV an app link, the same way the Google TV remote app opens apps:
 
@@ -169,12 +281,17 @@ WhatsOn sends the TV an app link, the same way the Google TV remote app opens ap
 
 A link replaces whatever is playing on that TV, which is why the busy check exists.
 
-## Data sources
+</details>
+
+<details>
+<summary><b>Where the data comes from</b></summary>
 
 - Guide, channels and library: your Plex or Jellyfin server (⚙ → Server).
 - Sports teams and scores: ESPN's public scoreboard feed. It is **unofficial and undocumented** and
   may change without notice. Games are matched to listings by TV network and kickoff time, or by both
   team names appearing in the channel or listing.
+
+</details>
 
 ## Development
 
