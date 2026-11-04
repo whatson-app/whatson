@@ -37,7 +37,7 @@ class Settings:
 
 
 def load() -> Settings:
-    # PLEX_URL / PLEX_TOKEN are optional now (Settings → Plex can sign in); plex_auth reads them.
+    # PLEX_URL / PLEX_TOKEN are optional now (Settings → Server → Plex can sign in); plex_auth reads them.
     data_dir = Path(os.environ.get("DATA_DIR", "./data")).resolve()
     data_dir.mkdir(parents=True, exist_ok=True)
     leagues = os.environ.get("ESPN_LEAGUES", DEFAULT_LEAGUES)

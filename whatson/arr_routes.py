@@ -28,7 +28,7 @@ def _kind(kind: str) -> str:
 def _client(kind: str) -> Arr:
     cfg = arr.load(state.conn, _kind(kind))
     if not cfg.configured:
-        raise HTTPException(409, f"{LABEL[kind]} isn't set up yet (Settings → Downloads)")
+        raise HTTPException(409, f"{LABEL[kind]} isn't set up yet (Settings → More → Downloads)")
     return Arr(cfg, state.lan_http)
 
 
@@ -212,7 +212,7 @@ class AddIn(BaseModel):
 @router.post("/get/add")
 async def get_add(body: AddIn):
     if not arr.allow_add(state.conn):
-        raise HTTPException(403, "Adding is turned off in Settings → Downloads")
+        raise HTTPException(403, "Adding is turned off in Settings → More → Downloads")
     if body.monitor and body.monitor not in arr.MONITOR:
         raise HTTPException(400, "Unknown monitor option")
     client = _client(body.kind)
@@ -243,7 +243,7 @@ class SearchIn(BaseModel):
 @router.post("/get/search")
 async def get_search(body: SearchIn):
     if not arr.allow_add(state.conn):
-        raise HTTPException(403, "Adding is turned off in Settings → Downloads")
+        raise HTTPException(403, "Adding is turned off in Settings → More → Downloads")
     client = _client(body.kind)
     try:
         await client.search(body.arr_id)

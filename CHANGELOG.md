@@ -4,6 +4,10 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Changed
+- **Settings has four tabs:** Server (Plex and Jellyfin together), TVs, Sports and More (AI search, Downloads,
+  Appearance).
+
 ### Added
 - The bottom of Settings shows the version you're running, with a link to WhatsOn on GitHub.
 
