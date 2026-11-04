@@ -394,7 +394,7 @@ def _schedule_card(g: espn.Game | None) -> dict | None:
     rows = _game_cards("g.id = ?", [g.id])
     if rows:
         return rows[0]
-    return {"id": g.id, "league": g.league.split("/")[-1], "name": g.name, "short": g.short_name, "starts": g.starts,
+    return {"id": g.id, "league": espn.league_label(g.league), "name": g.name, "short": g.short_name, "starts": g.starts,
             "state": g.state, "detail": g.detail, "home": g.home, "away": g.away, "home_score": g.home_score,
             "away_score": g.away_score, "networks": g.networks, "channels": [], "home_logo": g.home_logo,
             "away_logo": g.away_logo}

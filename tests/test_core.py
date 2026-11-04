@@ -1,6 +1,7 @@
 import time
+from pathlib import Path
 
-from whatson import db, search, tune
+from whatson import db, routes, search, tune
 from whatson.ingest import link_games, write_games, write_guide, write_library
 from whatson.sources import espn
 from whatson.sources.espn import Game, network_matches
@@ -68,6 +69,23 @@ def test_team_search_finds_channel():
     res = search.search_guide(conn, search.basic_filters("herons game"), NOW)
     assert res and res[0]["channels"][0]["vcn"] == "706"
     assert res[0]["game"]["away_score"] == "20" and res[0]["on_now"]
+
+
+def test_game_results_carry_the_readable_league_name():
+    out = search.run(make_db(), search.basic_filters("herons game"))
+    assert out["games"][0]["league"] == "College football"
+    assert out["guide"][0]["game"]["league"] == "College football"
+
+
+def test_schedule_card_for_a_game_not_stored_has_the_readable_league_name(monkeypatch):
+    monkeypatch.setattr(routes.state, "conn", db.connect(":memory:"), raising=False)
+    card = routes._schedule_card(game(id="basketball/mens-college-basketball:2",
+                                      league="basketball/mens-college-basketball"))
+    assert card["league"] == "Men's college basketball"
+
+
+def test_cards_show_the_league_name_as_sent():
+    assert "toUpperCase" not in (Path(routes.__file__).parent / "static" / "js" / "cards.js").read_text(encoding="utf-8")
 
 
 def test_library_and_people_search():
