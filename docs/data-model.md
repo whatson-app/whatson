@@ -17,6 +17,7 @@ Safe to lose: the next refresh fills them again. Switching server clears all of 
 | `library` | Movies and shows. `rating_key` is the server's item id, whichever server that is |
 | `library_fts` | Search index over the library |
 | `games` | Games from ESPN, with teams, scores and networks. `state` is pre, in or post |
+| `user_watched` | Watched status for Plex Home users other than the owner, refreshed as often as the library |
 
 ## Long-lived
 
@@ -24,11 +25,12 @@ These hold what people set up. A new column needs an `ALTER TABLE` in `connect()
 
 | Table | What it holds |
 |---|---|
-| `devices` | Paired TVs: name, kind, address, and how to recognise them in a server's sessions |
+| `devices` | Paired TVs: name, kind, address, how to recognise them in a server's sessions, and which Plex Home user watches there |
 | `fav_channels` | Favorite channels. Cleared when switching server, because the ids differ |
 | `follows` | Followed leagues and teams, shared by the household |
 | `arr_adds` | Titles added to Radarr or Sonarr from WhatsOn, for the Downloads view |
 | `tv_apps` | Apps seen on, or ticked for, each TV |
+| `plex_user_tokens` | Each chosen Plex Home user's server token, and the only address it goes to. Secret. Cleared when Plex is disconnected |
 | `meta` | Settings and saved keys, as key-value text |
 
 ## Changing columns
@@ -60,6 +62,7 @@ These hold what people set up. A new column needs an `ALTER TABLE` in `connect()
 | `plex.kid` | The id plex.tv knows that key by | |
 | `plex.jwt` | Sign-in token from plex.tv | Yes |
 | `plex.jwt_at` | When that token was last renewed | |
+| `plex.owner_uuid` | Which Plex Home user is the owner | |
 | `jellyfin.url` | Server address, and the only address `jellyfin.key` goes to | |
 | `jellyfin.key` | API key | Yes |
 | `jellyfin.name` | Server name | |

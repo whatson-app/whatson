@@ -76,3 +76,5 @@ Never rewrite an accepted ADR's reasoning. Fix a typo or add a link, but change 
 | [0022](0022-public-repo-privacy-and-ai-contributions.md) | No real home data in the repo, and people answer for AI contributions | Accepted |
 | [0023](0023-docker-image-host-networking-tagged-releases.md) | A Docker image with host networking, published from tags | Accepted |
 | [0024](0024-interface-conventions.md) | Interface conventions: tokens, both themes, phone width, plain words | Accepted |
+| [0025](0025-a-plex-home-user-for-each-tv.md) | A Plex Home user for each TV | Proposed |
+| [0026](0026-how-sports-scores-refresh.md) | Sports scores refresh by polling, on two timers | Proposed |

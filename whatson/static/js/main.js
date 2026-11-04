@@ -88,9 +88,11 @@ $("#settings").addEventListener("close", async () => {
   $("#connect-source").hidden = st.connected !== false;
   ai.on = Boolean(st.ai);
   if (st.ai) $("#global-search input").placeholder = "Search, or ask anything";
-  if (wasOff && st.connected) route();
+  if ((wasOff && st.connected) || location.hash.startsWith("#/library")) route();
 });
 window.addEventListener("hashchange", route);
+// Watched status and Up Next belong to the selected TV's Plex user.
+$("#tv").addEventListener("change", () => { if (location.hash.startsWith("#/library")) route(); });
 // The guide switches between grid and list at the phone breakpoint.
 let wasPhone = window.matchMedia("(max-width: 700px)").matches;
 window.addEventListener("resize", () => {

@@ -3,6 +3,9 @@
 
 import { $, ai, aiPlaceholder, api, esc, fmtMins, openSheet, store, thumbUrl, toast } from "./core.js";
 import { libNav, posterCard, row } from "./cards.js";
+import { deviceParam } from "./player.js";
+
+const hiddenNote = (m) => m.hidden_from ? `<p class="hint">Plex hides this from ${esc(m.hidden_from)}, so it may not play on this TV.</p>` : "";
 
 const PAGE = 60;
 let listState = null;
@@ -61,7 +64,7 @@ async function loadPage() {
   $("#lib-more").textContent = "Loading…";
   try {
     const q = new URLSearchParams({ kind: s.kind, sort: s.sort, genre: s.genre, unwatched: s.unwatched, offset: s.offset, limit: PAGE });
-    const r = await api(`/api/library?${q}`);
+    const r = await api(`/api/library?${q}&${deviceParam()}`);
     s.total = r.total;
     s.offset += r.items.length;
     $("#lib-grid").insertAdjacentHTML("beforeend", r.items.map((it) => posterCard(it)).join(""));
@@ -77,7 +80,7 @@ async function loadPage() {
 async function loadForYou(kind) {
   if (ai.on) $("#lib-foryou").innerHTML = aiPlaceholder("AI is picking what to watch…", "posters");
   try {
-    const s = await api("/api/suggest/library");
+    const s = await api(`/api/suggest/library?${deviceParam()}`);
     const upNext = s.up_next.filter((u) => kind === "show" ? u.kind === "show" : u.kind === "movie" || s.up_next_source !== "trakt");
     const scroll = (items) => `<div class="hscroll">${items.map((it) => posterCard(
       { ...it, rating_key: it.rating_key }, { label: it.label, reason: it.ai ? it.reason : "" })).join("")}</div>`;
@@ -100,7 +103,7 @@ async function loadForYou(kind) {
 }
 
 export async function showMovie(rk) {
-  const m = await api(`/api/library/item/${encodeURIComponent(rk)}`);
+  const m = await api(`/api/library/item/${encodeURIComponent(rk)}?${deviceParam()}`);
   openSheet(`
     <div class="detail">
       ${m.thumb ? `<img class="detail-poster" src="${thumbUrl(m.thumb, 300)}" alt="">` : ""}
@@ -109,6 +112,7 @@ export async function showMovie(rk) {
         <div class="meta">${esc([m.year, fmtMins(m.duration), m.content_rating, m.audience_rating ? `★ ${m.audience_rating}` : ""].filter(Boolean).join(" · "))}</div>
         <div class="chips"><button class="chip primary-chip" data-rating-key="${esc(m.rating_key)}">▶ ${m.view_offset ? "Resume" : "Play"} on TV</button>
           ${m.watched ? '<span class="badge">Watched</span>' : ""}</div>
+        ${hiddenNote(m)}
         ${m.summary ? `<p>${esc(m.summary)}</p>` : ""}
         ${m.genres.length ? `<p class="hint">${esc(m.genres.join(", "))}</p>` : ""}
         ${m.cast.length ? `<p class="hint">With ${esc(m.cast.join(", "))}</p>` : ""}
@@ -118,7 +122,7 @@ export async function showMovie(rk) {
 
 export async function renderShow(el, rk) {
   el.innerHTML = '<p class="spinner">Loading…</p>';
-  const s = await api(`/api/library/item/${encodeURIComponent(rk)}`);
+  const s = await api(`/api/library/item/${encodeURIComponent(rk)}?${deviceParam()}`);
   el.innerHTML = `
     <a class="back-link" href="#/library/show">← TV shows</a>
     <div class="detail show-head">
@@ -127,6 +131,7 @@ export async function renderShow(el, rk) {
         <h1 class="sheet-title">${esc(s.title)}</h1>
         <div class="meta">${esc([s.year, `${s.seasons?.length || 0} seasons`, s.content_rating, s.genres.slice(0, 3).join(", ")].filter(Boolean).join(" · "))}</div>
         <div class="chips"><button class="chip primary-chip" data-rating-key="${esc(s.rating_key)}">▶ Play next episode</button></div>
+        ${hiddenNote(s)}
         ${s.summary ? `<p class="summary-full">${esc(s.summary)}</p>` : ""}
       </div>
     </div>
@@ -146,7 +151,7 @@ async function loadSeason(rk) {
   const box = $("#episodes");
   box.innerHTML = '<p class="spinner">Loading episodes…</p>';
   try {
-    const eps = await api(`/api/library/season/${encodeURIComponent(rk)}`);
+    const eps = await api(`/api/library/season/${encodeURIComponent(rk)}?${deviceParam()}`);
     box.innerHTML = `<ol class="episodes">${eps.map((e) => `
       <li class="${e.watched ? "watched" : ""}">
         ${e.thumb ? `<img src="${thumbUrl(e.thumb, 200)}" alt="" loading="lazy">` : '<span class="ph"></span>'}

@@ -9,7 +9,7 @@ import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from . import ai, ai_settings, apps, arr, db, devices, search, suggest, tune
+from . import ai, ai_settings, apps, arr, db, devices, plex_users, search, suggest, tune
 from .sources import espn
 from .state import state
 from .trakt import TraktError
@@ -272,14 +272,18 @@ SORTS = {"added": "added_at DESC", "title": "title COLLATE NOCASE", "year": "yea
 
 @router.get("/library")
 async def library(kind: str = "movie", sort: str = "added", genre: str = "", q: str = "",
-                  unwatched: bool = False, offset: int = 0, limit: int = 60):
+                  unwatched: bool = False, offset: int = 0, limit: int = 60, device: int = 0):
     if kind not in ("movie", "show"):
         raise HTTPException(400, "kind is movie or show")
+    user = plex_users.viewer(device)
     where, args = ["l.kind = ?"], [kind]
     if genre:
         where.append("(', ' || l.genres || ', ') LIKE ?")
         args.append(f"%, {genre}, %")
-    if unwatched:
+    if unwatched and user:
+        where.append("l.rating_key NOT IN (SELECT rating_key FROM user_watched WHERE user = ? AND watched = 1)")
+        args.append(user)
+    elif unwatched:
         where.append("l.watched = 0")
     src = "library l"
     order = "l." + SORTS.get(sort, SORTS["added"]).replace(", title", ", l.title")
@@ -293,7 +297,8 @@ async def library(kind: str = "movie", sort: str = "added", genre: str = "", q: 
     total = state.conn.execute(f"SELECT count(*) FROM {src} WHERE {' AND '.join(where)}", args).fetchone()[0]
     rows = state.conn.execute(f"SELECT l.* FROM {src} WHERE {' AND '.join(where)} ORDER BY {order} LIMIT ? OFFSET ?",
                               args + [min(limit, 200), offset]).fetchall()
-    return {"total": total, "items": [search.library_item(r) for r in rows]}
+    items = [search.library_item(r) for r in rows]
+    return {"total": total, "items": plex_users.apply_watched(user, items) if user else items}
 
 
 @router.get("/library/genres")
@@ -306,20 +311,20 @@ async def library_genres(kind: str = "movie"):
 
 
 @router.get("/library/item/{rating_key}")
-async def library_detail(rating_key: str):
+async def library_detail(rating_key: str, device: int = 0):
     if not state.source.valid_id(rating_key):
         raise HTTPException(400, "Bad id")
-    out = await state.source.item(rating_key)
+    out = await plex_users.item_as(device, rating_key)
     if not out:
         raise HTTPException(404, "Not in the library")
     return out
 
 
 @router.get("/library/season/{rating_key}")
-async def library_season(rating_key: str):
+async def library_season(rating_key: str, device: int = 0):
     if not state.source.valid_id(rating_key):
         raise HTTPException(400, "Bad id")
-    return await state.source.episodes(rating_key)
+    return await plex_users.episodes_as(device, rating_key)
 
 
 # --- Sports -----------------------------------------------------------------------------------
@@ -546,14 +551,21 @@ async def suggest_live():
 
 
 @router.get("/suggest/library")
-async def suggest_library():
+async def suggest_library(device: int = 0):
     cache = state.trakt.cache()
-    up_next = suggest.library_up_next(state.conn, cache)
-    source = "trakt"
-    if not up_next:
-        source = state.source.name
-        up_next = await state.source.up_next()
+    user = plex_users.viewer(device)
     pool = suggest.library_candidates(state.conn, cache)
+    if user:  # Trakt follows one account, so a TV's own user skips it
+        source = state.source.name
+        up_next = await plex_users.up_next_as(user)
+        seen = plex_users.watched_keys(user)
+        pool = [c for c in pool if c["rating_key"] not in seen]
+    else:
+        up_next = suggest.library_up_next(state.conn, cache)
+        source = "trakt"
+        if not up_next:
+            source = state.source.name
+            up_next = await state.source.up_next()
     picks = await suggest.ai_rank(state.interpreter, "library", pool, 4, suggest.taste_context(cache))
     return {"up_next": up_next, "up_next_source": source, "source_label": state.source.label, "picks": picks,
             "missing": suggest.watchlist_missing(state.conn, cache), "seerr_url": db.get_meta(state.conn, "seerr_url"),

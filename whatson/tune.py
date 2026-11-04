@@ -21,20 +21,25 @@ IDLE_APPS = {
 PLEZY = "com.edde746.plezy"
 
 
-def live_link(channel: str, server: str = "") -> str:
+def live_link(channel: str, server: str = "", profile: str = "") -> str:
     # start=live skips Plezy's "watch from the beginning?" prompt on channels already streaming.
     params = {"channel": channel, "start": "live"}
     if server:
         params["server"] = server
+    if profile:
+        params["profile"] = profile
     return "plezy://live?" + urlencode(params)
 
 
-def open_link() -> str:
-    return "plezy://open"
+def open_link(profile: str = "") -> str:
+    return "plezy://open" + (f"?{urlencode({'profile': profile})}" if profile else "")
 
 
-def play_link(server: str, rating_key: str) -> str:
-    return "plezy://play?" + urlencode({"server": server, "id": rating_key})
+def play_link(server: str, rating_key: str, profile: str = "") -> str:
+    params = {"server": server, "id": rating_key}
+    if profile:
+        params["profile"] = profile
+    return "plezy://play?" + urlencode(params)
 
 
 @dataclass

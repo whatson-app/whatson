@@ -36,10 +36,10 @@ serves generated schemas at `/docs` and `/openapi.json`.
 
 | Route | What it does |
 |---|---|
-| `GET /api/search` | Search. `q`, `scope`, `ai`, `on_now`, `kind`, or `filters` to replay edited chips |
+| `GET /api/search` | Search. `q`, `scope`, `ai`, `on_now`, `kind`, or `filters` to replay edited chips. `device` shows watched status for that TV's Plex user |
 | `GET /api/answer` | One line answering `q` from the matches only. Empty when AI is off |
 | `GET /api/suggest/live` | Your shows on tonight, and picks for Live TV |
-| `GET /api/suggest/library` | Up next, picks, and watchlist titles you don't have |
+| `GET /api/suggest/library` | Up next, picks, and watchlist titles you don't have. `device` reads as that TV's Plex user |
 
 ## Live TV
 
@@ -54,10 +54,10 @@ serves generated schemas at `/docs` and `/openapi.json`.
 
 | Route | What it does |
 |---|---|
-| `GET /api/library` | Poster grid, with sort, genre and unwatched options |
+| `GET /api/library` | Poster grid, with sort, genre and unwatched options. `device` shows watched status for that TV's Plex user |
 | `GET /api/library/genres` | Genres in the library |
-| `GET /api/library/item/{rating_key}` | A movie or show, with seasons |
-| `GET /api/library/season/{rating_key}` | A season's episodes |
+| `GET /api/library/item/{rating_key}` | A movie or show, with seasons. `device` reads as that TV's Plex user, and `hidden_from` names them if Plex hides the title from them |
+| `GET /api/library/season/{rating_key}` | A season's episodes. `device` reads as that TV's Plex user |
 
 ## Sports
 
@@ -89,6 +89,7 @@ serves generated schemas at `/docs` and `/openapi.json`.
 | `GET /api/devices/{device_id}/now` | What the TV is showing. Cached for 8 seconds |
 | `POST /api/devices/{device_id}/key` | Now-playing bar's play/pause, stop, back and home |
 | `PUT /api/devices/{device_id}/jellyfin` | Link a TV to the Plezy device Jellyfin reports |
+| `PUT /api/devices/{device_id}/plex-user` | Choose which Plex Home user watches on a TV, or nobody |
 | `POST /api/tune` | Tune a channel or play a title. Checks whether the TV is busy unless `force` is set |
 
 ## Remote tab
@@ -124,6 +125,7 @@ serves generated schemas at `/docs` and `/openapi.json`.
 | `GET /api/settings/plex/signin/{pin_id}` | Check on a sign-in |
 | `POST /api/settings/plex/server` | Choose a server after signing in |
 | `PUT /api/settings/plex/manual` | Use an address and a pasted token |
+| `GET /api/settings/plex/users` | Plex Home users to choose from. Empty while Plex isn't the server in use |
 | `GET /api/settings/jellyfin` | Jellyfin connection |
 | `PUT /api/settings/jellyfin` | Connect to Jellyfin |
 | `DELETE /api/settings/jellyfin` | Forget the Jellyfin connection |

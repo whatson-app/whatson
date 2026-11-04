@@ -6,6 +6,7 @@ any Plex Live TV setup, whatever feeds it (HDHomeRun, Dispatcharr, Plex's cloud 
 
 from __future__ import annotations
 
+import copy
 import re
 from typing import Any
 
@@ -45,6 +46,12 @@ class PlexClient:
             "X-Plex-Product": self._name,
             "Accept": "application/json",
         }
+
+    def as_user(self, token: str) -> PlexClient:
+        """The same server, read as a Plex Home user: their watched status and On Deck."""
+        other = copy.copy(self)
+        other._headers = {**self._headers, "X-Plex-Token": token}
+        return other
 
     @property
     def configured(self) -> bool:
