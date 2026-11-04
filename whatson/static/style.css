@@ -98,6 +98,17 @@ dialog input, dialog select { padding: 10px; border-radius: 10px; border: 1px so
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 12px 0; border-bottom: 1px solid var(--border); }
 .tabs button { border: 0; background: none; border-radius: 0; padding: 8px 12px; color: var(--muted); white-space: nowrap; }
 .tabs button[aria-selected="true"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); font-weight: 600; }
+.fold { border: 1px solid var(--border); border-radius: 12px; background: var(--bg); margin: 8px 0; }
+.fold > summary { display: flex; align-items: center; gap: 8px; padding: 12px 14px; cursor: pointer; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary > span:first-child { margin-right: auto; }
+.fold > summary small { color: var(--muted); display: block; font-size: 13px; }
+.fold > summary::after { content: ""; width: 7px; height: 7px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg); margin: 0 3px; }
+.fold[open] > summary::after { transform: rotate(-135deg); }
+.fold > :not(summary) { margin-left: 14px; margin-right: 14px; }
+.fold > .wide { width: calc(100% - 28px); }
+.fold > :last-child { margin-bottom: 14px; }
+.fold .badge { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; }
 .settings-foot { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; text-align: center; }
 .settings-foot a { color: var(--muted); }
 .result { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px;
@@ -120,6 +131,16 @@ dialog input, dialog select { padding: 10px; border-radius: 10px; border: 1px so
 .msg.ok { color: #2e9d57; }
 .msg.err { color: var(--live); }
 .spinner { color: var(--muted); padding: 12px 0; }
+.spinner:not(#lib-more)::before { content: ""; display: inline-block; vertical-align: -3px; margin-right: 8px; }
+.spin, .spinner:not(#lib-more)::before { width: 16px; height: 16px; flex: none; border: 2px solid currentColor;
+  border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+.spin { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) {
+  .spin, .spinner:not(#lib-more)::before, .search.busy button::after { animation-duration: 3s; }
+  .skel { animation: none; }
+}
 .device { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 10px 0;
   border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .device .d-name { font-weight: 600; }
@@ -194,6 +215,19 @@ a { color: var(--accent); }
 /* --- Search chips and AI answer ------------------------------------------------------------------- */
 .chips-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 2px 0 6px; }
 .chip.ai { background: color-mix(in srgb, #7c5cff 15%, var(--surface)); border-color: color-mix(in srgb, #7c5cff 40%, var(--border)); }
+.search-status { display: flex; align-items: center; gap: 8px; color: var(--muted); margin: 2px 2px 8px; font-size: 14px; }
+.search-status.err { color: var(--text); }
+.search-status[hidden] { display: none; }
+/* Keeps the button's width and colour, with the spinner in place of its label. */
+.search.busy button { position: relative; color: transparent; opacity: 1; }
+.search.busy button::after { content: ""; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border: 2px solid var(--accent-text);
+  border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+.ai-working { color: var(--muted); font-size: 14px; }
+.ai-line { display: flex; align-items: center; gap: 8px; }
+.skel-row { display: flex; gap: 10px; overflow: hidden; margin: 10px 0 16px; }
+.skel { flex: none; border-radius: 12px; background: var(--border); animation: pulse 1.6s ease-in-out infinite; }
+.skel-row.cards .skel { width: 240px; height: 96px; }
+.skel-row.posters .skel { width: 150px; height: 225px; }
 .answer { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin: 6px 0; }
 .spark, .why.ai { color: #7c5cff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.spark, .why.ai) { color: #a993ff; } }
@@ -334,8 +368,8 @@ h3 { font-size: 15px; margin: 18px 0 6px; }
 .dl-form label { display: grid; gap: 4px; font-size: 14px; }
 .dl-form select { max-width: 100%; }
 #dl-movie, #dl-show { margin-top: 12px; }
-[data-panel="downloads"] > .toggle { display: flex; gap: 8px; align-items: center; justify-content: flex-start; font-weight: 600; }
-[data-panel="downloads"] > .toggle input, .dl-form .toggle input, .add-form .toggle input { width: auto; flex: none; }
+#fold-downloads > .toggle { display: flex; gap: 8px; align-items: center; justify-content: flex-start; font-weight: 600; }
+#fold-downloads > .toggle input, .dl-form .toggle input, .add-form .toggle input { width: auto; flex: none; }
 
 /* --- Remote tab --------------------------------------------------------------------------------- */
 .remote { max-width: 420px; margin: 0 auto; padding: 4px 0 12px; user-select: none; -webkit-user-select: none; }

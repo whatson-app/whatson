@@ -1,4 +1,4 @@
-"""Settings → Source: which server the guide and library come from. One at a time; they aren't merged."""
+"""Settings → Server: which server the guide and library come from. One at a time; they aren't merged."""
 
 from __future__ import annotations
 
@@ -62,8 +62,8 @@ async def set_source(body: SourceIn):
         raise HTTPException(400, "The source is plex or jellyfin")
     if body.source == "jellyfin":
         if not jellyfin():
-            raise HTTPException(400, "Connect your Jellyfin server first (Settings → Jellyfin).")
+            raise HTTPException(400, "Connect your Jellyfin server first (Settings → Server → Jellyfin).")
         if not db.get_meta(state.conn, "jellyfin.user_id"):
-            raise HTTPException(400, "Choose a Jellyfin user first (Settings → Jellyfin), for watched status and up next.")
+            raise HTTPException(400, "Choose a Jellyfin user first (Settings → Server → Jellyfin), for watched status and up next.")
     switch(body.source)
     return public()

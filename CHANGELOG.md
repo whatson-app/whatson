@@ -4,11 +4,17 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Changed
+- **Settings has four tabs:** Server (Plex and Jellyfin together), TVs, Sports and More (AI search, Downloads,
+  Appearance).
+
 ### Added
+- **Search shows that it's working,** with a spinning circle and a line saying what it's waiting for.
+- **AI shows that it's working,** with a placeholder where its answer, picks or game recap will appear.
 - The bottom of Settings shows the version you're running, with a link to WhatsOn on GitHub.
 
 ### Changed
-- The sample question in Settings → AI now asks about a different team.
+- The sample question in Settings → AI search now asks about a different team.
 
 ### Fixed
 - Settings → Appearance no longer has a stray sideways scrollbar.

@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
     state.lan_http = safe_http.client(timeout=20)
     state.source = source_routes.current()
     if not state.source.configured:
-        log.warning("No server yet: open WhatsOn → Settings → Source to connect Plex or Jellyfin")
+        log.warning("No server yet: open WhatsOn → Settings → Server to connect Plex or Jellyfin")
     state.refresher = Refresher(s, state.conn, state.source)
     state.trakt = Trakt(state.conn, state.http)
     tasks = [asyncio.create_task(state.refresher.run_forever()), asyncio.create_task(_trakt_loop()),

@@ -38,7 +38,7 @@ python -m venv .venv && .venv/bin/pip install -e ".[dev,anthropic,openai]"
 DATA_DIR=./data .venv/bin/uvicorn whatson.app:app --reload --port 8430
 ```
 
-Open `http://localhost:8430`, then connect a server in ⚙ → Source. The front end is plain JavaScript modules
+Open `http://localhost:8430`, then connect a server in ⚙ → Server. The front end is plain JavaScript modules
 with no build step, so reloading the page picks up changes.
 
 ## Checks

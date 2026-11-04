@@ -4,6 +4,18 @@ export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+/** Whether an AI provider is on, so screens can say when AI is what they're waiting for. */
+export const ai = { on: false };
+
+/** A spinning circle and a line saying what's being waited for. */
+export const working = (text) => `<span class="spin" aria-hidden="true"></span><span>${esc(text)}</span>`;
+
+/** Fills a space while AI works, so it's clear something is coming. `shape` is "cards" or "posters". */
+export function aiPlaceholder(text, shape = "") {
+  const blocks = shape ? `<div class="skel-row ${shape}" aria-hidden="true">${'<div class="skel"></div>'.repeat(4)}</div>` : "";
+  return `<div class="ai-working" role="status"><div class="ai-line"><span class="spin spark" aria-hidden="true"></span><span>${esc(text)}</span></div>${blocks}</div>`;
+}
+
 export const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } },

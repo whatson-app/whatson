@@ -40,52 +40,63 @@
   <dialog id="settings">
     <form method="dialog" class="dlg-head"><h2>Settings</h2><button class="icon-btn" aria-label="Close">✕</button></form>
     <div class="tabs" role="tablist">
-      <button role="tab" data-tab="source" aria-selected="false">Source</button>
-      <button role="tab" data-tab="plex" aria-selected="false">Plex</button>
+      <button role="tab" data-tab="server" aria-selected="false">Server</button>
       <button role="tab" data-tab="tvs" aria-selected="true">TVs</button>
       <button role="tab" data-tab="sports" aria-selected="false">Sports</button>
-      <button role="tab" data-tab="ai" aria-selected="false">AI search</button>
-      <button role="tab" data-tab="downloads" aria-selected="false">Downloads</button>
-      <button role="tab" data-tab="jellyfin" aria-selected="false">Jellyfin</button>
-      <button role="tab" data-tab="appearance" aria-selected="false">Appearance</button>
+      <button role="tab" data-tab="more" aria-selected="false">More</button>
     </div>
+
+    <section data-panel="server" hidden>
+      <p class="hint">Where the guide and library come from. WhatsOn reads one server at a time, and Plezy has to
+        be signed in to the same one on each TV.</p>
+      <details class="fold" id="fold-plex" name="server">
+        <summary><span>Plex<small id="src-note-plex"></small></span><span class="badge" id="src-badge-plex" hidden>in use</span></summary>
+        <button class="primary wide" data-source="plex" id="src-use-plex" hidden>Use Plex for the guide and library</button>
+        <div id="px-connected" class="card" hidden>
+          <div class="row"><b id="px-server"></b><span class="hint" id="px-how"></span></div>
+          <div class="row"><button id="px-switch">Change server</button><button id="px-disconnect">Disconnect</button></div>
+        </div>
+        <div id="px-setup">
+          <p class="hint">WhatsOn reads your Plex server's Live TV guide and library. Sign in to choose a server.</p>
+          <button id="px-signin" class="primary wide">Sign in with Plex</button>
+        </div>
+        <div id="px-flow" class="card" hidden></div>
+        <details id="px-manual-box">
+          <summary>Paste a token instead</summary>
+          <p class="hint">In Plex Web, open any movie, choose Get Info → View XML, and copy the <code>X-Plex-Token</code>
+            value from the address bar. A pasted token keeps working until you sign out of Plex everywhere.</p>
+          <form id="px-manual" class="stack">
+            <label>Server address <input name="url" autocomplete="off" placeholder="http://192.168.1.10:32400"></label>
+            <label>Token <input name="token" type="password" autocomplete="off"></label>
+            <div class="row"><button type="submit" class="primary">Connect</button></div>
+          </form>
+        </details>
+        <p class="hint">The sign-in shows up as “WhatsOn” under Plex → Settings → Authorized Devices, where you can remove it.
+          Tokens stay on the WhatsOn server and never reach this browser.</p>
+      </details>
+      <details class="fold" id="fold-jellyfin" name="server">
+        <summary><span>Jellyfin<small id="src-note-jellyfin"></small></span><span class="badge" id="src-badge-jellyfin" hidden>in use</span></summary>
+        <button class="primary wide" data-source="jellyfin" id="src-use-jellyfin" hidden>Use Jellyfin for the guide and library</button>
+        <p class="hint">Use Jellyfin for the guide and library, or just let the Remote tab control
+          Jellyfin apps playing on your TVs (seek bar, pause, next), including third-party apps that allow remote control.</p>
+        <p id="jf-status" class="msg" role="status"></p>
+        <form id="jf-form" class="stack">
+          <label>Server address <input name="url" autocomplete="off" placeholder="http://192.168.1.10:8096"></label>
+          <label>API key <input name="key" type="password" autocomplete="off" placeholder="Jellyfin → Dashboard → API Keys"></label>
+          <div class="row"><button type="button" id="jf-forget" hidden>Disconnect</button><button type="submit" class="primary">Connect</button></div>
+        </form>
+        <label id="jf-user-box" hidden>Whose watched status and up next to show
+          <select id="jf-user"></select>
+        </label>
+      </details>
+      <p class="hint">Switching reloads the guide and library from the other server and clears your favorite channels,
+        because the other server's channels are different.</p>
+    </section>
 
     <section data-panel="tvs">
       <div id="device-list"></div>
       <button id="add-tv" class="primary wide">+ Add a TV</button>
       <p id="status-line" class="hint"></p>
-    </section>
-
-    <section data-panel="source" hidden>
-      <p class="hint">Where the guide and library come from. Plezy plays from the same server, so it has to be signed in
-        to that server on each TV. WhatsOn reads one server at a time.</p>
-      <div id="src-choices" class="choice-list"></div>
-      <p class="hint">Switching reloads the guide and library from the other server and clears your favorite channels,
-        because the other server's channels are different.</p>
-    </section>
-
-    <section data-panel="plex" hidden>
-      <div id="px-connected" class="card" hidden>
-        <div class="row"><b id="px-server"></b><span class="hint" id="px-how"></span></div>
-        <div class="row"><button id="px-switch">Change server</button><button id="px-disconnect">Disconnect</button></div>
-      </div>
-      <div id="px-setup">
-        <p class="hint">WhatsOn reads your Plex server's Live TV guide and library. Sign in to choose a server.</p>
-        <button id="px-signin" class="primary wide">Sign in with Plex</button>
-      </div>
-      <div id="px-flow" class="card" hidden></div>
-      <details id="px-manual-box">
-        <summary>Paste a token instead</summary>
-        <p class="hint">In Plex Web, open any movie, choose Get Info → View XML, and copy the <code>X-Plex-Token</code>
-          value from the address bar. A pasted token keeps working until you sign out of Plex everywhere.</p>
-        <form id="px-manual" class="stack">
-          <label>Server address <input name="url" autocomplete="off" placeholder="http://192.168.1.10:32400"></label>
-          <label>Token <input name="token" type="password" autocomplete="off"></label>
-          <div class="row"><button type="submit" class="primary">Connect</button></div>
-        </form>
-      </details>
-      <p class="hint">The sign-in shows up as “WhatsOn” under Plex → Settings → Authorized Devices, where you can remove it.
-        Tokens stay on the WhatsOn server and never reach this browser.</p>
     </section>
 
     <section data-panel="sports" hidden>
@@ -101,82 +112,71 @@
       <div id="sp-team-results" class="choice-list"></div>
     </section>
 
-    <section data-panel="ai" hidden>
-      <p class="hint">Optional. With a provider set, questions like “a funny movie on tonight” are turned into
-        search filters, and suggestions get a reason. Without one, everything still works.</p>
-      <form id="ai-form" class="stack">
-        <label>Provider
-          <select name="provider">
-            <option value="none">Off (keyword search only)</option>
-            <option value="anthropic">Claude (Anthropic)</option>
-            <option value="openai">OpenAI or compatible (LM Studio, Ollama…)</option>
-            <option value="openrouter">OpenRouter</option>
-          </select>
-        </label>
-        <div data-ai-fields class="stack">
-          <label id="ai-base-url">Server URL
-            <input name="base_url" autocomplete="off" placeholder="Empty = OpenAI. Local: http://192.168.1.20:1234/v1">
-            <span class="hint">For LM Studio, Ollama or another OpenAI-compatible server. A key only goes to the server it was saved for.</span>
+    <section data-panel="more" hidden>
+      <details class="fold" id="fold-ai" name="more">
+        <summary><span>AI search</span></summary>
+        <p class="hint">Optional. With a provider set, questions like “a funny movie on tonight” are turned into
+          search filters, and suggestions get a reason. Without one, everything still works.</p>
+        <form id="ai-form" class="stack">
+          <label>Provider
+            <select name="provider">
+              <option value="none">Off (keyword search only)</option>
+              <option value="anthropic">Claude (Anthropic)</option>
+              <option value="openai">OpenAI or compatible (LM Studio, Ollama…)</option>
+              <option value="openrouter">OpenRouter</option>
+            </select>
           </label>
-          <label>API key <span id="ai-key-state" class="hint"></span>
-            <input name="key" type="password" autocomplete="off" placeholder="Paste a key to save or replace it">
+          <div data-ai-fields class="stack">
+            <label id="ai-base-url">Server URL
+              <input name="base_url" autocomplete="off" placeholder="Empty = OpenAI. Local: http://192.168.1.20:1234/v1">
+              <span class="hint">For LM Studio, Ollama or another OpenAI-compatible server. A key only goes to the server it was saved for.</span>
+            </label>
+            <label>API key <span id="ai-key-state" class="hint"></span>
+              <input name="key" type="password" autocomplete="off" placeholder="Paste a key to save or replace it">
+            </label>
+            <button type="button" id="ai-clear-key" class="link-btn" hidden>Remove saved key</button>
+            <label>Model
+              <div class="row model-row">
+                <select name="model_pick" aria-label="Model"></select>
+                <button type="button" id="ai-load-models">Load models</button>
+              </div>
+              <input name="model" autocomplete="off" placeholder="Model id" hidden>
+            </label>
+          </div>
+          <div class="row">
+            <span id="ai-active" class="hint"></span>
+            <button type="submit" class="primary">Save</button>
+          </div>
+        </form>
+        <form id="ai-test" class="stack">
+          <label>Try a question
+            <input name="query" value="is the lakers game on tonight?">
           </label>
-          <button type="button" id="ai-clear-key" class="link-btn" hidden>Remove saved key</button>
-          <label>Model
-            <div class="row model-row">
-              <select name="model_pick" aria-label="Model"></select>
-              <button type="button" id="ai-load-models">Load models</button>
-            </div>
-            <input name="model" autocomplete="off" placeholder="Model id" hidden>
-          </label>
-        </div>
-        <div class="row">
-          <span id="ai-active" class="hint"></span>
-          <button type="submit" class="primary">Save</button>
-        </div>
-      </form>
-      <form id="ai-test" class="stack">
-        <label>Try a question
-          <input name="query" value="is the lakers game on tonight?">
-        </label>
-        <div class="row"><button type="submit">Test</button></div>
-        <pre id="ai-result" class="result" hidden></pre>
-      </form>
-      <p class="hint">Keys are kept on the WhatsOn server and are never shown again in full.</p>
-    </section>
-
-    <section data-panel="downloads" hidden>
-      <p class="hint">Connect Radarr and Sonarr to find movies and shows you don't have and add them.
-        Library searches then show a “Get it” row, and Library → Downloads follows them until they reach your library.
-        WhatsOn only adds and searches; it never changes or deletes anything in Radarr or Sonarr.</p>
-      <label class="toggle"><input type="checkbox" id="dl-allow"> Allow adding from WhatsOn</label>
-      <p class="hint">While this is on, anyone who can open WhatsOn can add titles (they start downloading).</p>
-      <div id="dl-movie"></div>
-      <div id="dl-show"></div>
-    </section>
-
-    <section data-panel="appearance" hidden>
-      <fieldset class="seg">
-        <legend>Theme</legend>
-        <label><input type="radio" name="theme" value="system"><span>Match device</span></label>
-        <label><input type="radio" name="theme" value="light"><span>Light</span></label>
-        <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
-      </fieldset>
-      <p class="hint">Saved in this browser, so each phone or computer can have its own.</p>
-    </section>
-
-    <section data-panel="jellyfin" hidden>
-      <p class="hint">Use Jellyfin for the guide and library (Settings → Source), or just let the Remote tab control
-        Jellyfin apps playing on your TVs (seek bar, pause, next), including third-party apps that allow remote control.</p>
-      <p id="jf-status" class="msg" role="status"></p>
-      <form id="jf-form" class="stack">
-        <label>Server address <input name="url" autocomplete="off" placeholder="http://192.168.1.10:8096"></label>
-        <label>API key <input name="key" type="password" autocomplete="off" placeholder="Jellyfin → Dashboard → API Keys"></label>
-        <div class="row"><button type="button" id="jf-forget" hidden>Disconnect</button><button type="submit" class="primary">Connect</button></div>
-      </form>
-      <label id="jf-user-box" hidden>Whose watched status and up next to show
-        <select id="jf-user"></select>
-      </label>
+          <div class="row"><button type="submit">Test</button></div>
+          <pre id="ai-result" class="result" hidden></pre>
+        </form>
+        <p class="hint">Keys are kept on the WhatsOn server and are never shown again in full.</p>
+      </details>
+      <details class="fold" id="fold-downloads" name="more">
+        <summary><span>Downloads<small>Radarr and Sonarr</small></span></summary>
+        <p class="hint">Connect Radarr and Sonarr to find movies and shows you don't have and add them.
+          Library searches then show a “Get it” row, and Library → Downloads follows them until they reach your library.
+          WhatsOn only adds and searches; it never changes or deletes anything in Radarr or Sonarr.</p>
+        <label class="toggle"><input type="checkbox" id="dl-allow"> Allow adding from WhatsOn</label>
+        <p class="hint">While this is on, anyone who can open WhatsOn can add titles (they start downloading).</p>
+        <div id="dl-movie"></div>
+        <div id="dl-show"></div>
+      </details>
+      <details class="fold" id="fold-appearance" name="more">
+        <summary><span>Appearance<small>Theme</small></span></summary>
+        <fieldset class="seg">
+          <legend>Theme</legend>
+          <label><input type="radio" name="theme" value="system"><span>Match device</span></label>
+          <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+          <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+        </fieldset>
+        <p class="hint">Saved in this browser, so each phone or computer can have its own.</p>
+      </details>
     </section>
 
     <p class="settings-foot"><span id="app-version">WhatsOn</span> · <a href="https://github.com/whatson-app/whatson" target="_blank" rel="noopener">GitHub</a></p>
