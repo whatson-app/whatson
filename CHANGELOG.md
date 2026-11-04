@@ -4,6 +4,12 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Added
+- The bottom of Settings shows the version you're running, with a link to WhatsOn on GitHub.
+
+### Fixed
+- Settings → Appearance no longer has a stray sideways scrollbar.
+
 ## 0.2.0 - 2026-11-03
 
 ### Added

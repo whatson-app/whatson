@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import ai_settings, config, db, devices, plex_auth, safe_http, search, source_routes, tune
+from . import __version__, ai_settings, config, db, devices, plex_auth, safe_http, search, source_routes, tune
 from .ai import Interpreter
 from .devices.androidtv import AndroidTVDriver, NotPaired
 from .devices.base import PairingError, WrongCode
@@ -145,7 +145,7 @@ async def health():
 async def status():
     c = state.conn
     count = lambda t: c.execute(f"SELECT count(*) FROM {t}").fetchone()[0]  # noqa: E731
-    return {"channels": count("channels"), "airings": count("airings"), "library": count("library"),
+    return {"version": __version__, "channels": count("channels"), "airings": count("airings"), "library": count("library"),
             "games": count("games"), "ai": state.interpreter.enabled, "connected": state.source.configured,
             "source": state.source.name, "ai_provider": state.interpreter.provider if state.interpreter.enabled else None,
             "guide_refreshed": int(db.get_meta(c, "guide_refreshed", "0")),
