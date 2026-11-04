@@ -1,9 +1,11 @@
 # 0026. Sports scores refresh by polling, on two timers
 
-- **Status:** Proposed. This records how WhatsOn already works, so accepting it changes no code.
+- **Status:** Proposed
 - **Date:** 2026-11-03
 
 ## Context
+
+This records how WhatsOn already works, so accepting it changes no code.
 
 Scores come from ESPN's public scoreboard feed, which is unofficial and undocumented (ADR 0014). Someone with the Sports
 page open should see scores change without reloading, but the browser must never call an outside service directly.

@@ -1,9 +1,11 @@
 # 0025. A Plex Home user for each TV
 
-- **Status:** Proposed. Not built. The approach was tested on one TV on 2026-11-03, as described below.
+- **Status:** Proposed
 - **Date:** 2026-11-03
 
 ## Context
+
+This isn't built yet. The approach was tested on one TV, as described under [What testing found](#what-testing-found).
 
 WhatsOn talks to Plex with one token, normally the server owner's. Plex ties watched status and On Deck to the token, so
 everyone sees the owner's history, whoever is watching (ADR 0019). Jellyfin doesn't have this problem, because one key can
