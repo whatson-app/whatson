@@ -2,7 +2,7 @@
 
 <h1 align="center">WhatsOn</h1>
 
-<p align="center">Search what's on Live TV and in your Plex or Jellyfin library, then put it on a TV with one tap.</p>
+<p align="center">In Plezy, search what's on Live TV and in your Plex or Jellyfin library, then put it on a TV with one tap.</p>
 
 <p align="center">
   <a href="#features">Features</a> ·
