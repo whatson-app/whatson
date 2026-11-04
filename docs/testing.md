@@ -26,6 +26,7 @@ scripts when Node.js is installed. CI also runs gitleaks over the whole history,
 | `tests/test_release.py` | Release notes and version checks |
 | `tests/test_unraid.py` | The Unraid template matches how the app runs |
 | `tests/test_version.py` | The status route reports the version |
+| `tests/test_seerr_removed.py` | The old Seerr address can't be saved and is never returned |
 
 ## How tests are written
 

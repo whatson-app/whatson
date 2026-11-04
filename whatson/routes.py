@@ -9,7 +9,7 @@ import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from . import ai, ai_settings, apps, arr, db, devices, search, suggest, tune
+from . import ai, ai_settings, apps, arr, devices, search, suggest, tune
 from .sources import espn
 from .state import state
 from .trakt import TraktError
@@ -472,7 +472,7 @@ async def sports_recap(game_id: str):
     return remember(f"recap:{game_id}", {"recap": text, "plays": plays, "ai": bool(text)})
 
 
-# --- Trakt and Seerr settings -----------------------------------------------------------------
+# --- Trakt settings ---------------------------------------------------------------------------
 
 class TraktAppIn(BaseModel):
     client_id: str = ""
@@ -481,7 +481,7 @@ class TraktAppIn(BaseModel):
 
 @router.get("/trakt")
 async def trakt_status():
-    return {**state.trakt.public(), "seerr_url": db.get_meta(state.conn, "seerr_url")}
+    return state.trakt.public()
 
 
 @router.put("/trakt/app")
@@ -521,19 +521,6 @@ async def trakt_sync():
     return state.trakt.public()
 
 
-class SeerrIn(BaseModel):
-    url: str = ""
-
-
-@router.put("/settings/seerr")
-async def seerr(body: SeerrIn):
-    url = body.url.strip().rstrip("/")
-    if url and not url.startswith(("http://", "https://")):
-        raise HTTPException(400, "Seerr address must start with http:// or https://")
-    db.set_meta(state.conn, "seerr_url", url)
-    return {"seerr_url": url}
-
-
 # --- Suggestions ----------------------------------------------------------------------------------
 
 @router.get("/suggest/live")
@@ -556,6 +543,6 @@ async def suggest_library():
     pool = suggest.library_candidates(state.conn, cache)
     picks = await suggest.ai_rank(state.interpreter, "library", pool, 4, suggest.taste_context(cache))
     return {"up_next": up_next, "up_next_source": source, "source_label": state.source.label, "picks": picks,
-            "missing": suggest.watchlist_missing(state.conn, cache), "seerr_url": db.get_meta(state.conn, "seerr_url"),
+            "missing": suggest.watchlist_missing(state.conn, cache),
             "get": {k: arr.load(state.conn, k).configured for k in arr.KINDS},
             "ai": state.interpreter.enabled, "trakt": state.trakt.connected}

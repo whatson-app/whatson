@@ -76,7 +76,7 @@ These hold what people set up. A new column needs an `ALTER TABLE` in `connect()
 | `ai.key.{provider}` | API key | Yes |
 | `ai.key_base.{provider}` | The only address that key goes to | |
 | `trakt.{name}` | Trakt app, tokens and cached data. The client secret and tokens are secret | Partly |
-| `seerr_url` | Leftover. WhatsOn never calls this address | |
+| `seerr_url` | Only on older installs. Nothing reads or writes it now | |
 
 ## Other files in the data folder
 
