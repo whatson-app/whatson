@@ -11,6 +11,8 @@ import sqlite3
 import time
 from dataclasses import dataclass, field
 
+from .sources import espn
+
 STOPWORDS = {
     "a", "an", "the", "is", "are", "on", "in", "at", "of", "for", "to", "what", "whats", "what's", "where",
     "which", "who", "game", "games", "tv", "channel", "watch", "show", "me", "find", "playing",
@@ -229,7 +231,7 @@ def _group(rows: list[sqlite3.Row], now: int) -> list[dict]:
                 item["game"] = {"id": r["game_id"], "name": r["g_name"], "short": r["g_short"], "state": r["g_state"],
                                 "detail": r["g_detail"], "home": r["g_home"], "away": r["g_away"],
                                 "home_score": r["g_hs"], "away_score": r["g_as"],
-                                "league": r["g_league"].split("/")[-1]}
+                                "league": espn.league_label(r["g_league"])}
         if all(c["vcn"] != r["vcn"] for c in item["channels"]):
             item["channels"].append({"vcn": r["vcn"], "title": r["ch_title"], "thumb": r["ch_thumb"]})
     out = list(groups.values())
@@ -321,7 +323,7 @@ def _games(conn: sqlite3.Connection, now: int, hours: int, where: str, args: lis
     games: dict[str, dict] = {}
     for r in rows:
         g = games.setdefault(r["id"], {
-            "id": r["id"], "league": r["league"].split("/")[-1], "name": r["name"], "short": r["short_name"],
+            "id": r["id"], "league": espn.league_label(r["league"]), "name": r["name"], "short": r["short_name"],
             "starts": r["starts"], "state": r["state"], "detail": r["detail"], "home": r["home"],
             "away": r["away"], "home_score": r["home_score"], "away_score": r["away_score"],
             "networks": [n for n in r["networks"].split(",") if n], "channels": [],

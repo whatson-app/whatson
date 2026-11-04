@@ -10,6 +10,13 @@ What changed in each version of WhatsOn, newest first.
 - **Documentation** in `docs/`: architecture, API, data model, configuration, integrations, front end and testing, plus
   decision records (ADRs) for WhatsOn's design. Contributors now write and review ADRs as part of their changes.
 
+### Fixed
+- Game cards show the league's name, such as "College football", not `COLLEGE-FOOTBALL`.
+
+### Removed
+- The unused Seerr address setting: `PUT /api/settings/seerr`, and `seerr_url` in `GET /api/trakt` and
+  `GET /api/suggest/library`. The Settings screen never offered it, and WhatsOn never called that address.
+
 ## 0.2.1 - 2026-11-03
 
 ### Changed

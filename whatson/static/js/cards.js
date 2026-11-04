@@ -20,7 +20,7 @@ export function gameCard(g, { reason = "", highlight = false } = {}) {
   const when = g.state === "pre" ? fmtWhen(g.starts, 0) : esc(g.detail);
   return `
     <article class="card game ${highlight ? "highlight" : ""}">
-      <div class="meta">${g.state === "in" ? '<span class="live">LIVE</span>' : ""}<span>${esc((g.league || "").toUpperCase())}</span>
+      <div class="meta">${g.state === "in" ? '<span class="live">LIVE</span>' : ""}<span>${esc(g.league || "")}</span>
         <span>${when}</span>${!g.channels?.length && g.state !== "post" && g.networks?.length ? `<span>${esc(g.networks.join(", "))}</span>` : ""}</div>
       <div class="score">${teamLine(g.away, g.away_logo, g.away_score, started)}${teamLine(g.home, g.home_logo, g.home_score, started)}</div>
       ${reason ? `<div class="why">${esc(reason)}</div>` : ""}
@@ -34,7 +34,7 @@ export function airingCard(a) {
   const ch = a.channel ? [a.channel] : a.channels || [];
   return `
     <article class="card">
-      <div class="meta">${fmtWhen(a.begins, a.ends)}${a.game ? `<span>${esc(a.game.league?.toUpperCase() || "")} ${esc(a.game.detail)}</span>` : ""}</div>
+      <div class="meta">${fmtWhen(a.begins, a.ends)}${a.game ? `<span>${esc(a.game.league || "")} ${esc(a.game.detail)}</span>` : ""}</div>
       <div class="title">${esc(a.game ? `${a.game.away} at ${a.game.home}` : a.title)}</div>
       ${a.subtitle ? `<div class="sub">${esc(a.subtitle)}</div>` : ""}
       ${a.reason ? `<div class="why ${a.ai ? "ai" : ""}">${a.ai ? "✦ " : ""}${esc(a.reason)}</div>` : ""}

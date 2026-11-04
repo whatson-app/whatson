@@ -31,7 +31,8 @@ TVs are stricter: pairing takes only a private IP address (`_lan_host` in `whats
 - A new typed address must use `lan_http`. `tests/test_guards.py` has an allowlist of `state.http` uses and checks the LAN
   client doesn't follow redirects.
 - A server that relies on redirects has to be entered by its final address.
-- The leftover Seerr setting only checks the address's prefix. WhatsOn never calls it (ADR 0017).
+- The leftover Seerr setting only checks the address's prefix. WhatsOn never calls it (ADR 0017). That setting has since
+  been removed, so this no longer applies.
 
 ## Alternatives
 

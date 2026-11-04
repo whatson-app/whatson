@@ -154,4 +154,3 @@ These routes work, but nothing in the front end calls them. See [ADR 0018](adr/0
 | `POST /api/trakt/poll` | Check on a sign-in |
 | `POST /api/trakt/disconnect` | Forget the Trakt connection |
 | `POST /api/trakt/sync` | Sync now |
-| `PUT /api/settings/seerr` | Leftover: saves an address that WhatsOn never calls |

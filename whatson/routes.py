@@ -9,7 +9,7 @@ import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from . import ai, ai_settings, apps, arr, db, devices, plex_users, search, suggest, tune
+from . import ai, ai_settings, apps, arr, devices, plex_users, search, suggest, tune
 from .sources import espn
 from .state import state
 from .trakt import TraktError
@@ -399,7 +399,7 @@ def _schedule_card(g: espn.Game | None) -> dict | None:
     rows = _game_cards("g.id = ?", [g.id])
     if rows:
         return rows[0]
-    return {"id": g.id, "league": g.league.split("/")[-1], "name": g.name, "short": g.short_name, "starts": g.starts,
+    return {"id": g.id, "league": espn.league_label(g.league), "name": g.name, "short": g.short_name, "starts": g.starts,
             "state": g.state, "detail": g.detail, "home": g.home, "away": g.away, "home_score": g.home_score,
             "away_score": g.away_score, "networks": g.networks, "channels": [], "home_logo": g.home_logo,
             "away_logo": g.away_logo}
@@ -477,7 +477,7 @@ async def sports_recap(game_id: str):
     return remember(f"recap:{game_id}", {"recap": text, "plays": plays, "ai": bool(text)})
 
 
-# --- Trakt and Seerr settings -----------------------------------------------------------------
+# --- Trakt settings ---------------------------------------------------------------------------
 
 class TraktAppIn(BaseModel):
     client_id: str = ""
@@ -486,7 +486,7 @@ class TraktAppIn(BaseModel):
 
 @router.get("/trakt")
 async def trakt_status():
-    return {**state.trakt.public(), "seerr_url": db.get_meta(state.conn, "seerr_url")}
+    return state.trakt.public()
 
 
 @router.put("/trakt/app")
@@ -526,19 +526,6 @@ async def trakt_sync():
     return state.trakt.public()
 
 
-class SeerrIn(BaseModel):
-    url: str = ""
-
-
-@router.put("/settings/seerr")
-async def seerr(body: SeerrIn):
-    url = body.url.strip().rstrip("/")
-    if url and not url.startswith(("http://", "https://")):
-        raise HTTPException(400, "Seerr address must start with http:// or https://")
-    db.set_meta(state.conn, "seerr_url", url)
-    return {"seerr_url": url}
-
-
 # --- Suggestions ----------------------------------------------------------------------------------
 
 @router.get("/suggest/live")
@@ -568,6 +555,6 @@ async def suggest_library(device: int = 0):
             up_next = await state.source.up_next()
     picks = await suggest.ai_rank(state.interpreter, "library", pool, 4, suggest.taste_context(cache))
     return {"up_next": up_next, "up_next_source": source, "source_label": state.source.label, "picks": picks,
-            "missing": suggest.watchlist_missing(state.conn, cache), "seerr_url": db.get_meta(state.conn, "seerr_url"),
+            "missing": suggest.watchlist_missing(state.conn, cache),
             "get": {k: arr.load(state.conn, k).configured for k in arr.KINDS},
             "ai": state.interpreter.enabled, "trakt": state.trakt.connected}

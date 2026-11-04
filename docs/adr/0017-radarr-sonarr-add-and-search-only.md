@@ -27,6 +27,8 @@ WhatsOn looks titles up, adds them and starts searches. It **never edits or dele
 - `tests/test_guards.py` reads `whatson/arr.py` and fails on any new method, POST target or command.
 - A leftover remains: `PUT /api/settings/seerr` saves an address, and `/api/trakt` and `/api/suggest/library` return it.
   Nothing in the front end uses it and WhatsOn never calls that address. Removing it is a separate change.
+  **Note:** that change has been made. The route and both values are gone, and an older install may keep a `seerr_url` row
+  that nothing reads.
 
 ## Alternatives
 
