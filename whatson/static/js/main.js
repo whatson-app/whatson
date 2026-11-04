@@ -2,7 +2,7 @@
 // #/library[/movie|show|downloads], #/library/show/<id>, #/sports[/league], #/remote, #/search (results).
 // The last section used is remembered.
 
-import { $, $$, applyTheme, closeSheet, store, toast } from "./core.js";
+import { $, $$, ai, applyTheme, closeSheet, store, toast } from "./core.js";
 import { initPlayer, loadDevices, refreshNow, setPairHandler, setSettingsHandler, tuneTo } from "./player.js";
 import { goToChannel, renderLive, showAiring, toggleFav } from "./live.js";
 import { renderLibrary, renderShow, showMovie } from "./library.js";
@@ -86,6 +86,7 @@ $("#settings").addEventListener("close", async () => {
   const st = await fetch("/api/status").then((r) => r.json()).catch(() => ({}));
   const wasOff = !$("#connect-source").hidden;
   $("#connect-source").hidden = st.connected !== false;
+  ai.on = Boolean(st.ai);
   if (st.ai) $("#global-search input").placeholder = "Search, or ask anything";
   if (wasOff && st.connected) route();
 });
@@ -107,9 +108,11 @@ initSettings();
 (async () => {
   await loadDevices().catch(() => {});
   refreshNow();
+  // Before the first screen, so it knows whether to show that AI is working.
+  const st = await fetch("/api/status").then((r) => r.json()).catch(() => ({}));
+  ai.on = Boolean(st.ai);
   route();
   // First run: nothing works until a server is connected.
-  const st = await fetch("/api/status").then((r) => r.json()).catch(() => ({}));
   if (st.ai) $("#global-search input").placeholder = "Search, or ask anything";
   $("#connect-source").hidden = st.connected !== false;
   if (st.connected === false) openSettings("source");

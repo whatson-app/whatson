@@ -1,6 +1,6 @@
 // Live TV: suggestion rows, a guide grid (desktop) or now/next list (phone), favorites.
 
-import { $, $$, api, esc, fmtTime, fmtWhen, isPhone, openSheet, toast } from "./core.js";
+import { $, $$, ai, aiPlaceholder, api, esc, fmtTime, fmtWhen, isPhone, openSheet, toast } from "./core.js";
 import { airingCard, channelChips, row } from "./cards.js";
 
 const VIEWS = [["guide", "Guide"], ["favorites", "Favorites"], ["sports", "Sports"], ["movie", "Movies"], ["episode", "Shows"]];
@@ -27,12 +27,16 @@ export function goToChannel(vcn) {
 }
 
 async function loadForYou() {
+  if (ai.on) $("#live-foryou").innerHTML = aiPlaceholder("AI is picking what's on for you…", "cards");
   try {
     const s = await api("/api/suggest/live");
     const scroll = (items) => `<div class="hscroll">${items.map(airingCard).join("")}</div>`;
     $("#live-foryou").innerHTML =
       row(s.ai ? "On now, picked for you" : "On now for you", s.picks.length ? scroll(s.picks) : "", { badge: s.ai ? "AI" : "" });
-  } catch { /* suggestions are optional */ }
+  } catch {  // suggestions are optional
+    const box = $("#live-foryou");
+    if (box) box.innerHTML = "";
+  }
 }
 
 async function loadGuide(view) {

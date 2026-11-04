@@ -9,6 +9,8 @@ What changed in each version of WhatsOn, newest first.
   Appearance).
 
 ### Added
+- **Search shows that it's working,** with a spinning circle and a line saying what it's waiting for.
+- **AI shows that it's working,** with a placeholder where its answer, picks or game recap will appear.
 - The bottom of Settings shows the version you're running, with a link to WhatsOn on GitHub.
 
 ### Fixed

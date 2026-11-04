@@ -1,7 +1,7 @@
 // Sports: your teams and leagues pinned on top with live scores, close games worth switching to,
 // everything else folded below; a page per followed league; "Catch me up" recaps.
 
-import { $, api, esc, fmtWhen } from "./core.js";
+import { $, ai, aiPlaceholder, api, esc, fmtWhen, working } from "./core.js";
 import { gameCard, row } from "./cards.js";
 
 let timer = null;
@@ -88,7 +88,7 @@ export async function showRecap(btn) {
   const card = btn.closest(".card");
   const box = card.querySelector(".recap");
   box.hidden = false;
-  box.textContent = "Catching up…";
+  box.innerHTML = ai.on ? aiPlaceholder("AI is catching you up…") : `<div class="ai-line">${working("Catching up…")}</div>`;
   try {
     const r = await api(`/api/sports/recap?game_id=${encodeURIComponent(btn.dataset.recap)}`);
     box.innerHTML = r.recap ? `<span class="spark" aria-hidden="true">✦</span> ${esc(r.recap)}`

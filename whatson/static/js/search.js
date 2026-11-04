@@ -1,7 +1,7 @@
 // The search box each section uses. AI (when on) reads the question into filters; the filters show
 // as chips you can remove; with AI on, a one-line answer is written from the matches only.
 
-import { $, api, esc } from "./core.js";
+import { $, ai, aiPlaceholder, api, esc, working } from "./core.js";
 
 function chipsFor(f) {
   const out = [];
@@ -34,44 +34,76 @@ export function mountSearch(root, { scope, kind = "", placeholder, onResults, on
       <input type="search" autocomplete="off" placeholder="${esc(placeholder)}" aria-label="${esc(placeholder)}" value="${esc(initial)}">
       <button type="submit">Search</button>
     </form>
+    <p class="search-status" role="status" hidden></p>
     <div class="chips-row" hidden></div>
-    <p class="answer" hidden></p>`;
+    <div class="answer" hidden></div>`;
   const form = $("form", root);
   const input = $("input", root);
   const chips = $(".chips-row", root);
   const answer = $(".answer", root);
+  const status = $(".search-status", root);
+  const btn = $("button", form);
   let query = "";
   let filters = null;
+  let latest = 0;  // Each search takes a number, so a slow answer can't overwrite a newer search.
 
-  const showAnswer = async () => {
-    answer.hidden = true;
-    if (!filters) return;
-    try {
-      const r = await api(`/api/answer?q=${encodeURIComponent(query)}&scope=${scope}&filters=${encodeURIComponent(JSON.stringify(filters))}`);
-      if (r.answer) { answer.innerHTML = `<span class="spark" aria-hidden="true">✦</span> ${esc(r.answer)}`; answer.hidden = false; }
-    } catch { /* the answer line is optional */ }
+  const setBusy = (text) => {
+    status.hidden = !text;
+    status.className = "search-status";
+    status.innerHTML = text ? working(text) : "";
+    form.classList.toggle("busy", Boolean(text));
+    btn.disabled = Boolean(text);
   };
 
-  const render = (res) => {
+  const showAnswer = async (id) => {
+    answer.hidden = true;
+    if (!filters) return;
+    answer.innerHTML = aiPlaceholder("AI is writing an answer…");
+    answer.hidden = false;
+    let text = "";
+    try {
+      const r = await api(`/api/answer?q=${encodeURIComponent(query)}&scope=${scope}&filters=${encodeURIComponent(JSON.stringify(filters))}`);
+      text = r.answer;
+    } catch { /* the answer line is optional */ }
+    if (id !== latest) return;
+    answer.innerHTML = text ? `<span class="spark" aria-hidden="true">✦</span> ${esc(text)}` : "";
+    answer.hidden = !text;
+  };
+
+  const render = (res, id) => {
     filters = res.filters;
     const list = chipsFor(filters);
     chips.hidden = !list.length;
     chips.innerHTML = `<span class="hint">${res.ai ? "Read as" : "Showing"}</span>` +
       list.map(([k, label]) => `<button type="button" class="chip ${res.ai ? "ai" : ""}" data-chip="${esc(k)}" aria-label="Remove ${esc(label)}">${esc(label)} ✕</button>`).join("");
     onResults(res);
-    if (res.ai) showAnswer();
+    if (res.ai) showAnswer(id);
+  };
+
+  // `busyText` says what's being waited for; the search itself is `load`.
+  const search = async (load, busyText) => {
+    const id = ++latest;
+    answer.hidden = true;
+    setBusy(busyText);
+    try {
+      const res = await load();
+      if (id !== latest) return;
+      setBusy("");
+      render(res, id);
+    } catch (e) {
+      if (id !== latest) return;
+      setBusy("");
+      status.className = "search-status err";
+      status.textContent = `Couldn't search: ${e.message}`;
+      status.hidden = false;
+    }
   };
 
   const run = async (q) => {
     query = q;
-    if (!q) { chips.hidden = answer.hidden = true; filters = null; return onClear(); }
-    const btn = $("button", form);
-    btn.disabled = true;
-    try {
-      render(await api(`/api/search?q=${encodeURIComponent(q)}&scope=${scope}&kind=${kind}`));
-    } finally {
-      btn.disabled = false;
-    }
+    if (!q) { latest++; setBusy(""); chips.hidden = answer.hidden = true; filters = null; return onClear(); }
+    await search(() => api(`/api/search?q=${encodeURIComponent(q)}&scope=${scope}&kind=${kind}`),
+      ai.on ? "AI is reading your question…" : "Searching…");
   };
 
   form.addEventListener("submit", (ev) => { ev.preventDefault(); run(input.value.trim()); });
@@ -80,12 +112,15 @@ export function mountSearch(root, { scope, kind = "", placeholder, onResults, on
     const b = ev.target.closest("[data-chip]");
     if (!b || !filters) return;
     const next = without(filters, b.dataset.chip);
-    const r = await api(`/api/search?scope=${scope}&kind=${kind}&filters=${encodeURIComponent(JSON.stringify(next))}`);
-    r.ai = chips.querySelector(".chip.ai") !== null;
-    render(r);
+    const wasAi = chips.querySelector(".chip.ai") !== null;
+    await search(async () => {
+      const r = await api(`/api/search?scope=${scope}&kind=${kind}&filters=${encodeURIComponent(JSON.stringify(next))}`);
+      r.ai = wasAi;
+      return r;
+    }, "Searching…");
   });
   if (initial) run(initial);
   // Empty the box without calling onClear (used when leaving the results page).
-  const reset = () => { input.value = ""; query = ""; filters = null; chips.hidden = answer.hidden = true; };
+  const reset = () => { latest++; setBusy(""); input.value = ""; query = ""; filters = null; chips.hidden = answer.hidden = true; };
   return { run, reset };
 }
