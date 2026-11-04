@@ -203,7 +203,7 @@ class AISettingsIn(BaseModel):
 
 
 class AITestIn(BaseModel):
-    query: str = "is the bears game on tonight?"
+    query: str = "is the lakers game on tonight?"
 
 
 class PairStartIn(BaseModel):

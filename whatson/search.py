@@ -298,7 +298,7 @@ def sports_board(conn: sqlite3.Connection, now: int | None = None, hours: int = 
 
 
 def search_games(conn: sqlite3.Connection, f: Filters, now: int | None = None) -> list[dict]:
-    """Today's games whose teams match the query, finished ones included, so "illini" answers
+    """Today's games whose teams match the query, finished ones included, so a team name answers
     with the final score after the game is over."""
     words = [w for w in re.findall(r"[\w']+", f.text.lower()) if w not in STOPWORDS and len(w) > 2]
     if not words:

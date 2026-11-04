@@ -7,6 +7,9 @@ What changed in each version of WhatsOn, newest first.
 ### Added
 - The bottom of Settings shows the version you're running, with a link to WhatsOn on GitHub.
 
+### Changed
+- The sample question in Settings → AI now asks about a different team.
+
 ### Fixed
 - Settings → Appearance no longer has a stray sideways scrollbar.
 

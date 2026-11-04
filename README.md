@@ -2,7 +2,7 @@
 
 Search what's on Live TV and in your Plex or Jellyfin library, then put it on a TV with one tap.
 
-Live TV guides are hard to search: you can't type "illini" and find the game, because guide
+Live TV guides are hard to search: you can't type "gators" and find the game, because guide
 listings say "Live: College Football". WhatsOn reads your server's guide, matches sports listings to
 real games (teams, live scores) and lets you search across the guide and your library. Pick a TV and
 it tunes the channel or starts the movie there.

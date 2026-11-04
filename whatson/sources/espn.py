@@ -1,7 +1,7 @@
 """ESPN's public scoreboard feed: teams, start times, live scores and TV networks.
 
 Guide listings rarely name the teams ("Live: College Football"), so games are matched
-to airings by network and kickoff, which is what makes "illini" find the right channel.
+to airings by network and kickoff, which is what makes a team name find the right channel.
 """
 
 from __future__ import annotations
@@ -153,10 +153,9 @@ LEAGUE_LABELS = {
 }
 
 
-# ESPN gives a school one team id across its college sports (Illinois is 356 in football and
+# ESPN gives a school one team id across its college sports (the same id in football and
 # basketball), so following a school in one college league follows it in all of them. Pro team ids
-# only mean something within their own league (the Blackhawks are 4 in the NHL; 4 is someone else
-# in the NBA).
+# only mean something within their own league (team 4 in the NHL is someone else in the NBA).
 COLLEGE_LEAGUES = ("football/college-football", "basketball/mens-college-basketball",
                    "basketball/womens-college-basketball")
 
