@@ -4,6 +4,8 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+## 0.2.1 - 2026-11-03
+
 ### Changed
 - **Settings has four tabs:** Server (Plex and Jellyfin together), TVs, Sports and More (AI search, Downloads,
   Appearance).
@@ -14,7 +16,7 @@ What changed in each version of WhatsOn, newest first.
 - The bottom of Settings shows the version you're running, with a link to WhatsOn on GitHub.
 
 ### Fixed
-- Settings → Appearance no longer has a stray sideways scrollbar.
+- The theme picker's section no longer has a stray sideways scrollbar.
 
 ## 0.2.0 - 2026-11-03
 
