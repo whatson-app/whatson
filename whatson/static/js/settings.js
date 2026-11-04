@@ -9,7 +9,10 @@ export function openSettings(tab = "tvs") {
   for (const b of $$("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
   for (const p of $$("[data-panel]")) p.hidden = p.dataset.panel !== tab;
   ({ source: loadSource, plex: loadPlex, tvs: renderDevices, ai: loadAI, sports: loadSportsSettings, downloads: loadDownloadsSettings, jellyfin: loadJellyfin, appearance: loadAppearance })[tab]?.()?.catch?.((e) => toast(e.message));
-  if (!$("#settings").open) $("#settings").showModal();
+  if (!$("#settings").open) {
+    $("#settings").showModal();
+    api("/api/status").then((s) => { $("#app-version").textContent = `WhatsOn ${s.version}`; }).catch(() => {});
+  }
 }
 
 // --- Source ---------------------------------------------------------------------------------------
