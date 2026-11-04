@@ -3,7 +3,9 @@
 The rules: http(s) only, LAN and loopback allowed, never link-local or cloud-metadata addresses.
 `check_base_url` applies them when an address is saved. `PinnedTransport` applies them again on every
 request and then connects to the exact IP it checked, so a name that later resolves somewhere else
-(DNS rebinding) can't slip past the check made at save time."""
+(DNS rebinding) can't slip past the check made at save time.
+
+Decisions: ADR 0008."""
 
 from __future__ import annotations
 

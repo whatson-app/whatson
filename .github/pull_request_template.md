@@ -13,6 +13,15 @@ Tried on real hardware (TV model and app, or "not tried"):
 
 Not tested:
 
+## Decisions and docs
+
+ADRs I reviewed for this area (numbers):
+
+- [ ] This makes or reverses a design decision, and adds or supersedes an ADR: <!-- number -->
+- [ ] No ADR needed (say why, in a few words):
+- [ ] Nothing here goes against an accepted ADR
+- [ ] `docs/` and the README still match the code, or were updated here
+
 ## Security (tick what applies)
 
 - [ ] Saves a key or token, or changes where one is sent

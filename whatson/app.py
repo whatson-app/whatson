@@ -1,4 +1,6 @@
-"""HTTP API and web UI."""
+"""HTTP API and web UI.
+
+Decisions: ADR 0002, 0003, 0006."""
 
 from __future__ import annotations
 

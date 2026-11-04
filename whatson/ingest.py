@@ -1,4 +1,6 @@
-"""Background refresh: pull guide, library and games, link games to airings, rebuild the indexes."""
+"""Background refresh: pull guide, library and games, link games to airings, rebuild the indexes.
+
+Decisions: ADR 0005, 0014."""
 
 from __future__ import annotations
 

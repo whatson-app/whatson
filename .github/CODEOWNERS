@@ -13,6 +13,8 @@
 /whatson/source_routes.py @jpittelkow
 /whatson/ai_settings.py   @jpittelkow
 /tests/test_guards.py     @jpittelkow
+/tests/test_docs.py       @jpittelkow
+/docs/adr/                @jpittelkow
 /scripts/                 @jpittelkow
 /.github/                 @jpittelkow
 /AGENTS.md                @jpittelkow

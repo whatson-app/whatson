@@ -1,5 +1,7 @@
 """Search over the guide and the library. Works on its own; the AI layer (ai.py) only turns a
-free-form question into the same Filters."""
+free-form question into the same Filters.
+
+Decisions: ADR 0015."""
 
 from __future__ import annotations
 
