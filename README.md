@@ -43,7 +43,9 @@ and a **now playing** bar for the TV you picked (what's on it, progress, pause a
   WhatsOn only adds and searches; it never edits or deletes anything in Radarr or Sonarr. A switch in
   ⚙ → More → Downloads turns adding off; while it's on, anyone who can open WhatsOn can add.
 - **Sports**: follow leagues and teams; your teams pinned on top with live scores, last result and next
-  game (following a college team covers that school's football and basketball); close games worth switching to; "catch me up" recaps; scores refresh every 30 s while you follow a live game.
+  game (following a college team covers that school's football and basketball); close games worth switching to; "catch me up" recaps. Scores update without reloading: the page re-reads every 20 s,
+  and WhatsOn fetches new scores every 30 s while a team or league you follow is live, otherwise every 5 minutes
+  (`SPORTS_REFRESH_MINUTES`), so other live games can lag by that much. See [how scores refresh](docs/adr/0026-how-sports-scores-refresh.md).
 - **AI (optional)**: Claude, OpenAI, OpenRouter, or a local OpenAI-compatible server (LM Studio, Ollama).
   It reads questions like "something funny the kids and I can watch tonight, under 2 hours" into filters
   you can edit as chips, writes a one-line answer from the matches only, ranks suggestions with a reason,
