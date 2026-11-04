@@ -4,6 +4,8 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+## 0.2.2 - 2026-11-03
+
 ### Added
 - **A Plex Home user for each TV:** choose who watches on each TV in ⚙ → TVs. Picking that TV shows their Up Next and
   watched status, and anything you start plays as them in Plezy.
