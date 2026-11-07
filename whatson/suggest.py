@@ -102,7 +102,10 @@ def live_candidates(conn: sqlite3.Connection, cache: dict, now: int | None = Non
         g = games.get(r["game_id"]) if r["game_id"] else None
         if g and (g["state"] == "in" or g["starts"] <= now + 3600) and (
                 g["league"] in followed or espn.is_followed_game(teams, g["league"], g["home_id"], g["away_id"])):
-            pool[aid] = _airing(r, now, f"{g['away']} at {g['home']}, {g['detail']}", "sports")
+            mine = [name for name, tid in ((g["away"], g["away_id"]), (g["home"], g["home_id"]))
+                    if (g["league"], tid) in teams]
+            you_follow = f"You follow {' and '.join(mine)}: " if mine else ""
+            pool[aid] = _airing(r, now, f"{you_follow}{g['away']} at {g['home']}, {g['detail']}", "sports")
         elif norm_title(r["title"]) in recs:
             pool[aid] = _airing(r, now, "Trakt recommends it", "trakt")
         elif r["fav"] and r["begins"] <= now:
@@ -218,6 +221,11 @@ async def ai_rank(interpreter: Interpreter, key: str, candidates: list[dict], wa
             return candidates[:want]
         _rank_cache[key] = (time.time(), picks)
     return [{**by_id[p["id"]], "reason": p["reason"], "ai": True} for p in picks if p["id"] in by_id]
+
+
+def ai_ranked(picks: list[dict]) -> bool:
+    """Whether AI really ranked this row, so a fallback to rule order is never labelled as AI."""
+    return any(p.get("ai") for p in picks)
 
 
 def taste_context(cache: dict) -> str:

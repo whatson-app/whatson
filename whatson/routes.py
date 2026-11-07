@@ -534,7 +534,7 @@ async def suggest_live():
     shows = suggest.live_shows(state.conn, cache)
     picks = await suggest.ai_rank(state.interpreter, "live", suggest.live_candidates(state.conn, cache), 6,
                                   suggest.taste_context(cache))
-    return {"your_shows": shows, "picks": picks, "ai": state.interpreter.enabled, "trakt": state.trakt.connected}
+    return {"your_shows": shows, "picks": picks, "ai": suggest.ai_ranked(picks), "trakt": state.trakt.connected}
 
 
 @router.get("/suggest/library")
@@ -557,4 +557,4 @@ async def suggest_library(device: int = 0):
     return {"up_next": up_next, "up_next_source": source, "source_label": state.source.label, "picks": picks,
             "missing": suggest.watchlist_missing(state.conn, cache),
             "get": {k: arr.load(state.conn, k).configured for k in arr.KINDS},
-            "ai": state.interpreter.enabled, "trakt": state.trakt.connected}
+            "ai": suggest.ai_ranked(picks), "trakt": state.trakt.connected}

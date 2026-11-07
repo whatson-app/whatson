@@ -1,3 +1,4 @@
+import asyncio
 import time
 from datetime import datetime, timezone
 
@@ -64,3 +65,39 @@ def test_worth_switching_close_late_games_only():
         Game(id="3", state="in", detail="8:00 - 2nd", home_score="7", away_score="7", **base),
     ])
     assert [w["id"] for w in suggest.worth_switching(conn)] == ["1"]
+
+
+def test_game_signal_names_the_team_you_follow():
+    conn = db.connect(":memory:")
+    base = dict(league="football/nfl", name="", short_name="", starts=NOW, state="in", detail="2:10 - 4th",
+                home_score="21", away_score="17", networks=[], terms=[])
+    write_games(conn, [Game(id="1", home="Otters", away="Comets", home_id="9", away_id="3", **base),
+                       Game(id="2", home="Foxes", away="Pilots", home_id="8", away_id="16", **base)])
+    write_guide(conn, [Channel("4", "4", "Channel A"), Channel("5", "5", "Channel B")],
+                [Airing("4", "NFL", "", "", "sports", NOW - 600, NOW + 6000),
+                 Airing("5", "NFL", "", "", "sports", NOW - 600, NOW + 6000)], [])
+    conn.execute("UPDATE airings SET game_id = '1' WHERE channel_id = '4'")
+    conn.execute("UPDATE airings SET game_id = '2' WHERE channel_id = '5'")
+    conn.execute("INSERT INTO follows VALUES ('team', 'football/nfl', '3', 'Riverton Comets', 'RIV', '')")
+    reasons = {c["channel"]["title"]: c["reason"] for c in suggest.live_candidates(conn, {}, NOW)}
+    assert reasons["Channel A"] == "You follow Comets: Comets at Otters, 2:10 - 4th"
+    assert reasons["Channel B"] == "Pilots at Foxes, 2:10 - 4th"  # same league, but not your team
+
+
+class FakeAI:
+    enabled = True
+
+    def __init__(self, picks):
+        self.picks = picks
+
+    async def rank(self, candidates, want, context=""):
+        return self.picks
+
+
+def test_row_is_only_labelled_ai_when_ai_really_ranked_it():
+    pool = [{"id": "l1", "type": "library", "title": "Knives Out", "reason": "On your watchlist"}]
+    suggest._rank_cache.clear()
+    failed = asyncio.run(suggest.ai_rank(FakeAI([]), "t", pool, 4))
+    assert failed[0]["reason"] == "On your watchlist" and not suggest.ai_ranked(failed)
+    ranked = asyncio.run(suggest.ai_rank(FakeAI([{"id": "l1", "reason": "Fits your taste"}]), "t", pool, 4))
+    assert ranked[0]["reason"] == "Fits your taste" and suggest.ai_ranked(ranked)

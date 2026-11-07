@@ -88,10 +88,12 @@ RANK_SCHEMA = {
     "required": ["picks"], "additionalProperties": False,
 }
 
-RANK_SYSTEM = """You pick what someone would most enjoy watching from a list of candidates, using their
-taste signals (ratings, watchlist, recent viewing, favorite teams) given with each candidate.
+RANK_SYSTEM = """You pick what someone would most enjoy watching from a list of candidates. Their taste
+is given as any ratings and recent viewing above the list, and as a signal on each candidate (such as
+watchlist, followed team, favorite channel or Trakt recommendation).
 Return up to the requested number of candidate ids, best first, each with a reason of at most 12 words
-written to the viewer ("You rated Glass Onion 9"). Only use ids from the list. Don't invent facts."""
+written to the viewer. Only mention a rating or viewing habit that appears in what you were given.
+Only use ids from the list. Don't invent facts."""
 
 RECAP_SCHEMA = ANSWER_SCHEMA
 RECAP_SYSTEM = """You catch a sports fan up on a game in at most three short sentences from the score,

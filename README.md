@@ -86,7 +86,7 @@ Use Claude, OpenAI, OpenRouter, or a local OpenAI-compatible server (LM Studio, 
 - Ask in plain words. A question like "something funny the kids and I can watch tonight, under 2 hours" becomes
   filters you can edit as chips.
 - It writes a one-line answer from the matches only, ranks suggestions with a reason, and summarizes games.
-- It never invents results.
+- It never invents results. [How AI works](#how-ai-works) lists exactly what it's sent.
 
 ### Get movies and shows you don't have
 
@@ -306,6 +306,31 @@ A link replaces whatever is playing on that TV, which is why the busy check exis
   team names appearing in the channel or listing.
 
 </details>
+
+## How AI works
+
+AI is off until you pick a provider in ⚙ → More → AI search. Normal code gathers the facts first; AI only reads them
+and summarizes or reorders. The exact prompts are in [`whatson/ai.py`](whatson/ai.py).
+
+| Feature | When it runs | What's sent | Without AI |
+|---|---|---|---|
+| Reading a question | You search | Local time and your question | Keyword search |
+| One-line answer | After an AI-read search | Local time, your question and up to 15 matches (title, time, channel, length, genres, content rating, whether you've watched it) | No line |
+| Catch me up | You press the button on a live game | Score, status, the last 12 scoring plays and the last 10 plays, from ESPN. Nothing about you. Cached for 60 s. | The last 5 plays |
+| Suggestions: On now, picked for you; Tonight's pick | You open Live TV or Library, at most once per row every 15 min | Local time and up to 40 candidates with title, time and channel or year, length and genres, and why each was considered (such as a team you follow or a favorite channel) | The same candidates in rule order, with rule reasons |
+
+**Who gets it:** the provider you chose, under its own terms. With a local server, none of this leaves
+your network. Plex sign-ins and keys, TV details and your Radarr and Sonarr settings are never sent to AI.
+
+**What's checked:** suggestions can only come from the candidate list, because rules choose the candidates and
+any other title is dropped. Up next and close games worth switching to don't use AI at all.
+
+**What isn't checked:** the wording. Reasons, answers and recaps are told to use only the facts given,
+but nothing verifies that, so they can be wrong. Suggestions also don't include summaries or content
+ratings, so AI judges those from the title, genres and what it already knows.
+
+**How to tell:** ✦ marks AI-written text, and a row only shows the AI badge when AI actually ranked it.
+If a call fails or is too slow, you get the version without AI.
 
 ## Development
 

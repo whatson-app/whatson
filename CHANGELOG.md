@@ -4,6 +4,13 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Fixed
+- Suggestion rows only show the AI badge when AI really ranked them, not whenever AI is set up. Sports picks now tell
+  the AI which followed team is playing, as its prompt said they would.
+
+### Added
+- **How AI works** in the README: what each AI feature is sent, what's checked and what isn't.
+
 ## 0.2.2 - 2026-11-03
 
 ### Added
