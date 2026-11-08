@@ -99,7 +99,7 @@ async function loadForYou(kind) {
     const missing = s.missing.filter((m) => m.kind === kind);
     if (missing.length) {
       html += row("On your watchlist, not in your library", `<ul class="missing">${missing.map((m) => `
-        <li><span>${esc(m.title)}${m.year ? ` (${m.year})` : ""}</span>${getButton(m, s)}</li>`).join("")}</ul>`,
+        <li><span>${esc(m.title)}${m.year ? ` (${esc(m.year)})` : ""}</span>${getButton(m, s)}</li>`).join("")}</ul>`,
       { badge: "Trakt" });
     }
     $("#lib-foryou").innerHTML = html;
