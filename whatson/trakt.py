@@ -22,7 +22,9 @@ from . import db
 
 log = logging.getLogger(__name__)
 API = "https://api.trakt.tv"
-OOB = "urn:ietf:wg:oauth:2.0:oob"
+# Device sign-in never redirects, but Trakt checks the app's redirect URI when a token is refreshed. New development apps
+# may only use localhost, so that's what the setup says to enter; apps made earlier with the out-of-band URI still work.
+REDIRECT_URIS = ("http://localhost", "urn:ietf:wg:oauth:2.0:oob")
 SYNC_EVERY = 30 * 60
 
 
@@ -140,9 +142,12 @@ class Trakt:
     async def _refresh_if_needed(self) -> None:
         if not self.connected or time.time() < int(self._m("expires", "0") or 0) - 86400:
             return
-        r = await self.http.post(f"{API}/oauth/token", headers=self._headers(auth=False), json={
-            "refresh_token": self._m("refresh"), "client_id": self.client_id,
-            "client_secret": self._m("client_secret"), "redirect_uri": OOB, "grant_type": "refresh_token"})
+        for uri in REDIRECT_URIS:
+            r = await self.http.post(f"{API}/oauth/token", headers=self._headers(auth=False), json={
+                "refresh_token": self._m("refresh"), "client_id": self.client_id,
+                "client_secret": self._m("client_secret"), "redirect_uri": uri, "grant_type": "refresh_token"})
+            if r.status_code not in (400, 401):
+                break
         if r.status_code == 200:
             self._store_tokens(r.json())
         elif r.status_code in (400, 401):
