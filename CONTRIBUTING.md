@@ -8,7 +8,7 @@ since only Google TV / Android TV works today.
 - **Small fixes:** go ahead and open a pull request.
 - **Anything bigger:** open an issue first, so nobody spends time on something that won't be merged.
 - **Security problems:** see [SECURITY.md](SECURITY.md), and please don't open a public issue.
-- **Not planned:** a login and a Seerr add mode. Trakt is out of the interface for now.
+- **Not planned:** a login and a Seerr add mode.
 - **Read the decisions first:** [docs/adr/](docs/adr/README.md) says why things are built the way they are. It's worth
   a look before you propose changing them.
 
@@ -146,7 +146,6 @@ outside, call the server through `api()`, and check it at phone width and in lig
   request checks, takes over a TV or talks to Radarr or Sonarr gets a closer look (see `.github/CODEOWNERS`).
 - Match the style of the file you're in. There's no linter, so please don't reformat code.
 - Never include keys, tokens or details of your home in code, tests, logs or screenshots.
-- `whatson/trakt.py` and its routes are present but have no interface for now.
 
 Maintainers handle versions, tags and releases. By contributing, you agree your work is released under the
 [MIT License](LICENSE).

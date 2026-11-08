@@ -1,5 +1,5 @@
 // Library: Movies / TV shows poster grids with sort and genres; show pages with seasons;
-// suggestion rows (up next, tonight's pick).
+// suggestion rows (up next, tonight's pick, watchlist titles you don't own).
 
 import { $, ai, aiPlaceholder, api, esc, fmtMins, openSheet, store, thumbUrl, toast } from "./core.js";
 import { libNav, posterCard, row } from "./cards.js";
@@ -84,7 +84,7 @@ async function loadForYou(kind) {
     const upNext = s.up_next.filter((u) => kind === "show" ? u.kind === "show" : u.kind === "movie" || s.up_next_source !== "trakt");
     const scroll = (items) => `<div class="hscroll">${items.map((it) => posterCard(
       { ...it, rating_key: it.rating_key }, { label: it.label, reason: it.ai ? it.reason : "" })).join("")}</div>`;
-    let html = row("Up next", upNext.length ? scroll(upNext) : "", { badge: s.source_label });
+    let html = row("Up next", upNext.length ? scroll(upNext) : "", { badge: s.up_next_source === "trakt" ? "Trakt" : s.source_label });
     if (kind === "movie" && s.picks.length) {
       const [top, ...rest] = s.picks;
       html += row(s.ai ? "Tonight's pick" : "Worth a watch", `
@@ -94,6 +94,13 @@ async function loadForYou(kind) {
             <div class="why ${top.ai ? "ai" : ""}">${top.ai ? "✦ " : ""}${esc(top.reason)}</div>
             <div class="chips"><button class="chip primary-chip" data-rating-key="${esc(top.rating_key)}">▶ Play</button></div></div>
         </div>${rest.length ? scroll(rest) : ""}`, { badge: s.ai ? "AI" : "" });
+    }
+    // Watchlist titles you don't own, with "Get it" when Radarr or Sonarr is connected for that kind.
+    const missing = s.missing.filter((m) => m.kind === kind);
+    if (missing.length) {
+      html += row("On your watchlist, not in your library", `<ul class="missing">${missing.map((m) => `
+        <li><span>${esc(m.title)}${m.year ? ` (${m.year})` : ""}</span>${getButton(m, s)}</li>`).join("")}</ul>`,
+      { badge: "Trakt" });
     }
     $("#lib-foryou").innerHTML = html;
   } catch {  // optional
@@ -164,4 +171,9 @@ async function loadSeason(rk) {
     box.innerHTML = `<p class="msg err">${esc(e.message)}</p>`;
     toast(e.message);
   }
+}
+
+function getButton(m, s) {
+  const id = m.kind === "movie" ? m.tmdb : m.tvdb;
+  return s.get?.[m.kind] && id ? `<button class="chip" data-get="${esc(m.kind)}:${esc(id)}">Get it</button>` : "";
 }

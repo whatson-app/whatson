@@ -88,6 +88,18 @@ Use Claude, OpenAI, OpenRouter, or a local OpenAI-compatible server (LM Studio, 
 - It writes a one-line answer from the matches only, ranks suggestions with a reason, and summarizes games.
 - It never invents results. [How AI works](#how-ai-works) lists exactly what it's sent.
 
+### Trakt
+
+Connect Trakt in ⚙ → More → Trakt. You make your own free API app at
+[trakt.tv/oauth/applications](https://trakt.tv/oauth/applications) (redirect URI `urn:ietf:wg:oauth:2.0:oob`), paste its
+client ID and secret, then approve WhatsOn with a code.
+
+- Live TV gets "Your shows on tonight": new episodes of shows you watch, and watchlist movies, in the guide.
+- Library gets "Up next" from Trakt and a row of watchlist titles you don't own, with "Get it" when Radarr or Sonarr is
+  connected.
+- Suggestions use your watchlist, Trakt's recommendations, your ratings and what you've been watching.
+- A TV with its own Plex Home user skips Trakt, because Trakt follows one account.
+
 ### Get movies and shows you don't have
 
 | Add a title | Follow its download |
@@ -113,6 +125,7 @@ Everything is set up in the web page, under ⚙.
 | **TVs** | Add and pair TVs, rename them, and check whether one is on and free to tune. | To tune or use the remote |
 | **Sports** | Follow leagues and teams. | Optional |
 | **More → AI search** | Choose a provider and model, then try a question to test it. | Optional |
+| **More → Trakt** | Connect Trakt for your shows airing tonight, your watchlist, "Up next" and suggestions that know your taste. Needs your own free Trakt API app. | Optional |
 | **More → Downloads** | Connect Radarr and Sonarr, set default folders and quality, and turn adding on or off. | Optional |
 | **More → Appearance** | Match your device, or always use light or dark. Saved per browser, so each phone or computer can differ. | Optional |
 
@@ -317,12 +330,12 @@ and summarizes or reorders. The exact prompts are in [`whatson/ai.py`](whatson/a
 | Reading a question | You search | Local time and your question | Keyword search |
 | One-line answer | After an AI-read search | Local time, your question and up to 15 matches (title, time, channel, length, genres, content rating, whether you've watched it) | No line |
 | Catch me up | You press the button on a live game | Score, status, the last 12 scoring plays and the last 10 plays, from ESPN. Nothing about you. Cached for 60 s. | The last 5 plays |
-| Suggestions: On now, picked for you; Tonight's pick | You open Live TV or Library, at most once per row every 15 min | Local time and up to 40 candidates with title, time and channel or year, length and genres, and why each was considered (such as a team you follow or a favorite channel) | The same candidates in rule order, with rule reasons |
+| Suggestions: On now, picked for you; Tonight's pick | You open Live TV or Library, at most once per row every 15 min | Local time; with Trakt, up to 15 titles you rated 8 or higher and your 10 most recently watched shows; up to 40 candidates with title, time and channel or year, length and genres, and why each was considered (such as on your watchlist, a team you follow or a favorite channel) | The same candidates in rule order, with rule reasons |
 
 **Who gets it:** the provider you chose, under its own terms. With a local server, none of this leaves
-your network. Plex sign-ins and keys, TV details and your Radarr and Sonarr settings are never sent to AI.
+your network. Without Trakt, suggestions send no ratings or viewing history. Plex sign-ins and keys, Trakt tokens, TV details and your Radarr and Sonarr settings are never sent to AI.
 
-**What's checked:** suggestions can only come from the candidate list, because rules choose the candidates and
+**What's checked:** suggestions can only come from the candidate list, because rules and Trakt choose the candidates and
 any other title is dropped. Up next and close games worth switching to don't use AI at all.
 
 **What isn't checked:** the wording. Reasons, answers and recaps are told to use only the facts given,

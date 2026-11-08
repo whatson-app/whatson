@@ -69,7 +69,7 @@ Never rewrite an accepted ADR's reasoning. Fix a typo or add a link, but change 
 | [0015](0015-filters-are-the-search-contract.md) | Filters are the search contract, whoever fills them in | Accepted |
 | [0016](0016-ai-is-optional-and-never-invents.md) | AI is optional, and only reads what it's given | Accepted |
 | [0017](0017-radarr-sonarr-add-and-search-only.md) | Radarr and Sonarr: add and search only, with no Seerr mode | Accepted |
-| [0018](0018-trakt-stays-out-of-the-interface.md) | Trakt stays in the code but out of the interface | Accepted |
+| [0018](0018-trakt-stays-out-of-the-interface.md) | Trakt stays in the code but out of the interface | Superseded by ADR 0027 |
 | [0019](0019-one-household-shared-settings.md) | One household, with shared settings | Accepted |
 | [0020](0020-learn-each-tvs-apps.md) | Learn each TV's apps, and open them by link | Accepted |
 | [0021](0021-rules-enforced-by-guard-tests.md) | Enforce the rules with guard tests and one check command | Accepted |
@@ -78,3 +78,4 @@ Never rewrite an accepted ADR's reasoning. Fix a typo or add a link, but change 
 | [0024](0024-interface-conventions.md) | Interface conventions: tokens, both themes, phone width, plain words | Accepted |
 | [0025](0025-a-plex-home-user-for-each-tv.md) | A Plex Home user for each TV | Proposed |
 | [0026](0026-how-sports-scores-refresh.md) | Sports scores refresh by polling, on two timers | Proposed |
+| [0027](0027-trakt-back-in-the-interface.md) | Trakt is back in the interface, as an optional section under More | Proposed |

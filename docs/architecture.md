@@ -65,7 +65,7 @@ flowchart LR
 | `whatson/arr.py` | Radarr and Sonarr client: look up, add, search |
 | `whatson/plex_auth.py` | Plex sign-in and saved Plex connection |
 | `whatson/plex_users.py` | A Plex Home user for each TV: reading as them, and their watched status |
-| `whatson/trakt.py` | Trakt sign-in and sync, with no interface for now |
+| `whatson/trakt.py` | Trakt sign-in and sync (⚙ → More → Trakt) |
 | `whatson/safe_http.py` | The rules and client for addresses typed in Settings |
 
 The front end has [its own page](frontend.md). Package markers: `whatson/__init__.py` holds the version, and

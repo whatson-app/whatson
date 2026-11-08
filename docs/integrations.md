@@ -13,7 +13,7 @@ issue and an ADR. `tests/test_guards.py` keeps a list of allowed hosts.
 | ESPN | No | Teams, games, scores | `whatson/sources/espn.py` |
 | Radarr and Sonarr | No | Getting titles | `whatson/arr.py` |
 | AI providers | No | Reading questions, answers, ranking, recaps | `whatson/ai.py` |
-| Trakt | No, and has no interface | Taste signals for suggestions | `whatson/trakt.py` |
+| Trakt | No | Taste signals for suggestions | `whatson/trakt.py` |
 
 ## Plex
 
@@ -75,8 +75,9 @@ Trakt if it's connected. See
 
 ## Trakt
 
-Each self-hoster would register their own free Trakt API app, because a shared secret can't ship in open source. Out of the
-interface for now. See [ADR 0018](adr/0018-trakt-stays-out-of-the-interface.md).
+Each self-hoster registers their own free Trakt API app, because a shared secret can't ship in open source, and connects
+in ⚙ → More → Trakt with a device code. It feeds "Your shows on tonight", "Up next", the watchlist row and suggestions. See
+[ADR 0027](adr/0027-trakt-back-in-the-interface.md).
 
 ## Links only
 
