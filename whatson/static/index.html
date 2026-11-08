@@ -172,10 +172,11 @@
           <p class="hint">Each WhatsOn needs its own free Trakt API app. Create one at
             <a href="https://trakt.tv/oauth/applications" target="_blank" rel="noopener">trakt.tv/oauth/applications</a>
             with the redirect URI <code>http://localhost</code> (Trakt asks for one, but sign-in here uses a code and never
-            opens it), then paste its client ID and secret here.</p>
+            opens it), then paste its client ID here. Newer Trakt apps have no client secret; leave that empty.</p>
           <form id="tk-app-form" class="stack">
             <label>Client ID <input name="client_id" autocomplete="off"></label>
-            <label>Client secret <input name="client_secret" type="password" autocomplete="off"></label>
+            <label>Client secret <span class="hint">(only older apps have one)</span>
+              <input name="client_secret" type="password" autocomplete="off"></label>
             <div class="row"><button type="submit" class="primary">Save</button></div>
           </form>
         </details>

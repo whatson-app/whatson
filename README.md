@@ -92,7 +92,7 @@ Use Claude, OpenAI, OpenRouter, or a local OpenAI-compatible server (LM Studio, 
 
 Connect Trakt in ⚙ → More → Trakt. You make your own free API app at
 [trakt.tv/oauth/applications](https://trakt.tv/oauth/applications) (redirect URI `http://localhost`), paste its
-client ID and secret, then approve WhatsOn with a code.
+client ID (and its secret, if your app is old enough to have one), then approve WhatsOn with a code.
 
 - Live TV gets "Your shows on tonight": new episodes of shows you watch, and watchlist movies, in the guide.
 - Library gets "Up next" from Trakt and a row of watchlist titles you don't own, with "Get it" when Radarr or Sonarr is

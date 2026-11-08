@@ -8,7 +8,8 @@ What changed in each version of WhatsOn, newest first.
 - **Trakt is back**, in ⚙ → More → Trakt: connect with your own free Trakt app for "Your shows on tonight", "Up next"
   from Trakt, a row of watchlist titles you don't own (with "Get it" when Radarr or Sonarr is connected) and suggestions
   that use your ratings and viewing. ADR 0027 replaces ADR 0018. Register the Trakt app with the redirect URI
-  `http://localhost`; apps made earlier with `urn:ietf:wg:oauth:2.0:oob` keep working.
+  `http://localhost`. New Trakt apps have no client secret, so sign-in uses PKCE; older apps with a secret and
+  `urn:ietf:wg:oauth:2.0:oob` keep working.
 - **How AI works** in the README: what each AI feature is sent, what's checked and what isn't.
 
 ### Fixed

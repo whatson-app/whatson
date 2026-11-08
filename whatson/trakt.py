@@ -9,7 +9,10 @@ Decisions: ADR 0018."""
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
+import secrets
 import logging
 import re
 import sqlite3
@@ -64,7 +67,7 @@ class Trakt:
 
     @property
     def configured(self) -> bool:
-        return bool(self._m("client_id") and self._m("client_secret"))
+        return bool(self._m("client_id"))  # Trakt no longer issues a secret to new apps
 
     @property
     def connected(self) -> bool:
@@ -79,7 +82,8 @@ class Trakt:
     def save_app(self, client_id: str, client_secret: str) -> None:
         if client_id.strip():
             if client_id.strip() != self.client_id:
-                self.disconnect()  # tokens belong to the old app
+                self.disconnect()  # tokens, and any secret, belong to the old app
+                self.conn.execute("DELETE FROM meta WHERE key = 'trakt.client_secret'")
             self._set("client_id", client_id.strip())
         if client_secret.strip():
             self._set("client_secret", client_secret.strip())
@@ -96,6 +100,11 @@ class Trakt:
             h["Authorization"] = f"Bearer {self._m('access')}"
         return h
 
+    def _secret(self) -> dict:
+        """The client secret, for apps made before Trakt stopped issuing one. Newer apps send none."""
+        s = self._m("client_secret")
+        return {"client_secret": s} if s else {}
+
     def _store_tokens(self, tok: dict) -> None:
         self._set("access", tok["access_token"])
         self._set("refresh", tok.get("refresh_token", ""))
@@ -105,13 +114,16 @@ class Trakt:
 
     async def start_device(self) -> dict:
         if not self.configured:
-            raise TraktError("Add your Trakt app's client id and secret first.")
-        r = await self.http.post(f"{API}/oauth/device/code", json={"client_id": self.client_id},
-                                 headers=self._headers(auth=False))
+            raise TraktError("Add your Trakt app's client ID first.")
+        # PKCE: apps without a secret prove the sign-in is theirs with a one-time verifier.
+        verifier = secrets.token_urlsafe(64)
+        challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
+        r = await self.http.post(f"{API}/oauth/device/code", headers=self._headers(auth=False), json={
+            "client_id": self.client_id, "code_challenge": challenge, "code_challenge_method": "S256"})
         if r.status_code != 200:
             raise TraktError(f"Trakt didn't accept the client id ({r.status_code}).")
         d = r.json()
-        self.device = {**d, "started": time.time()}
+        self.device = {**d, "started": time.time(), "verifier": verifier}
         return {"user_code": d["user_code"], "verification_url": d["verification_url"],
                 "expires_in": d["expires_in"], "interval": d["interval"]}
 
@@ -124,7 +136,7 @@ class Trakt:
             return "expired"
         r = await self.http.post(f"{API}/oauth/device/token", headers=self._headers(auth=False), json={
             "code": self.device["device_code"], "client_id": self.client_id,
-            "client_secret": self._m("client_secret")})
+            "code_verifier": self.device["verifier"], **self._secret()})
         if r.status_code == 200:
             self._store_tokens(r.json())
             self.device = None
@@ -144,8 +156,8 @@ class Trakt:
             return
         for uri in REDIRECT_URIS:
             r = await self.http.post(f"{API}/oauth/token", headers=self._headers(auth=False), json={
-                "refresh_token": self._m("refresh"), "client_id": self.client_id,
-                "client_secret": self._m("client_secret"), "redirect_uri": uri, "grant_type": "refresh_token"})
+                "refresh_token": self._m("refresh"), "client_id": self.client_id, **self._secret(),
+                "redirect_uri": uri, "grant_type": "refresh_token"})
             if r.status_code not in (400, 401):
                 break
         if r.status_code == 200:
