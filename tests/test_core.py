@@ -253,3 +253,16 @@ def test_following_a_school_covers_its_other_college_sports_but_pro_ids_stay_in_
     assert espn.is_followed_game(keys, "basketball/mens-college-basketball", "901", "902")   # same school, other sport
     assert espn.is_followed_game(keys, "hockey/nhl", "1", "4")
     assert not espn.is_followed_game(keys, "basketball/nba", "4", "9")                     # a different team 4
+
+
+def test_network_match_skips_a_listing_for_another_sport():
+    channels = {"9": Channel("9", "9", "Fox Soccer Plus"), "7": Channel("7", "7", "FOX 6 KDEM")}
+    airings = [Airing("9", "Women's Serie A Soccer", "", "", "sports", NOW - 3000, NOW + 3000),
+               Airing("7", "Live: College Football", "", "", "sports", NOW - 4000, NOW + 3000)]
+    assert list(link_games(airings, channels, [game(networks=["FOX"])])) == [1]
+
+
+def test_soccer_listing_called_football_still_matches_a_soccer_game():
+    channels = {"7": Channel("7", "7", "FOX 6 KDEM")}
+    airings = [Airing("7", "Live: International Football", "", "", "sports", NOW - 4000, NOW + 3000)]
+    assert 0 in link_games(airings, channels, [game(id="soccer/usa.1:1", league="soccer/usa.1", networks=["FOX"])])

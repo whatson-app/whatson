@@ -101,3 +101,19 @@ def test_row_is_only_labelled_ai_when_ai_really_ranked_it():
     assert failed[0]["reason"] == "On your watchlist" and not suggest.ai_ranked(failed)
     ranked = asyncio.run(suggest.ai_rank(FakeAI([{"id": "l1", "reason": "Fits your taste"}]), "t", pool, 4))
     assert ranked[0]["reason"] == "Fits your taste" and suggest.ai_ranked(ranked)
+
+
+def test_one_card_per_game_and_none_for_games_already_over():
+    conn = db.connect(":memory:")
+    base = dict(league="football/nfl", name="", short_name="", networks=[], terms=[], home_score="7", away_score="3")
+    write_games(conn, [Game(id="live", home="Otters", away="Comets", starts=NOW - 7200, state="in", detail="3rd", **base),
+                       Game(id="over", home="Foxes", away="Pilots", starts=NOW - 9000, state="post", detail="Final", **base)])
+    write_guide(conn, [Channel("1", "1", "Channel A"), Channel("2", "2", "Channel B")],
+                [Airing("1", "NFL", "", "", "sports", NOW - 7200, NOW + 3600),        # the live broadcast
+                 Airing("2", "Comets at Otters", "", "", "sports", NOW + 1800, NOW + 9000),  # a replay later
+                 Airing("2", "Pilots at Foxes", "", "", "sports", NOW - 9000, NOW + 600)], [])  # finished game
+    conn.execute("UPDATE airings SET game_id = 'live' WHERE title IN ('NFL', 'Comets at Otters')")
+    conn.execute("UPDATE airings SET game_id = 'over' WHERE title = 'Pilots at Foxes'")
+    conn.execute("INSERT INTO follows VALUES ('league', 'football/nfl', '', '', '', '')")
+    picks = suggest.live_candidates(conn, {}, NOW)
+    assert [(p["title"], p["channel"]["title"]) for p in picks] == [("NFL", "Channel A")]

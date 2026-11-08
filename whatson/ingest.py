@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import sqlite3
 import time
 
@@ -17,6 +18,21 @@ from .sources.base import Airing, Channel, LibraryItem, Source
 log = logging.getLogger(__name__)
 GAME_SLOT_MIN_VCN = 1000  # Dispatcharr-style per-event channels; ranked after real networks
 MATCH_WINDOW = 45 * 60    # a game "airs" on a channel if kickoff is within 45 min of the listing
+# Words that name a sport in a listing. Soccer counts "football" too, so a football listing never rules a soccer game out.
+SPORT_WORDS = {"football": ("football", "nfl", "ncaaf"), "basketball": ("basketball", "nba", "wnba", "ncaab"),
+               "hockey": ("hockey", "nhl"), "baseball": ("baseball", "mlb"),
+               "soccer": ("soccer", "football", "futbol", "fútbol", "mls")}
+
+
+def _names_other_sport(text: str, league: str) -> bool:
+    """True when the listing names a sport and it isn't the game's, such as a soccer match on a channel
+    whose name happens to match the game's network ("Fox Soccer Plus" for a game on Fox)."""
+    def says(sport: str) -> bool:
+        return any(re.search(rf"\b{w}\b", text) for w in SPORT_WORDS[sport])
+    mine = league.split("/", 1)[0]
+    if mine not in SPORT_WORDS or says(mine):
+        return False
+    return any(says(sport) for sport in SPORT_WORDS if sport != mine)
 
 
 def link_games(airings: list[Airing], channels: dict[str, Channel],
@@ -37,7 +53,7 @@ def link_games(airings: list[Airing], channels: dict[str, Channel],
             # Event channels name the teams all day; only the listing around kickoff is the game.
             named = g.home.lower() in text and g.away.lower() in text and a.begins - 3 * 3600 <= g.starts < a.ends
             on_network = any(espn.network_matches(n, ch_title) for n in g.networks)
-            if named or (in_window and on_network):
+            if named or (in_window and on_network and not _names_other_sport(text, g.league)):
                 gap = abs(g.starts - a.begins)
                 if best is None or named or gap < best_gap:
                     best, best_gap = g, gap
