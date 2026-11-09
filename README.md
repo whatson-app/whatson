@@ -75,7 +75,7 @@ One search bar across live TV, games, your library and titles you could get.
 
 ## Optional extras
 
-WhatsOn works without either of these.
+WhatsOn works without any of these.
 
 ### AI search
 
@@ -91,8 +91,9 @@ Use Claude, OpenAI, OpenRouter, or a local OpenAI-compatible server (LM Studio, 
 ### Trakt
 
 Connect Trakt in ⚙ → More → Trakt. You make your own free API app at
-[trakt.tv/oauth/applications](https://trakt.tv/oauth/applications) (redirect URI `http://localhost`), paste its
-client ID (and its secret, if your app is old enough to have one), then approve WhatsOn with a code.
+[trakt.tv/oauth/applications](https://trakt.tv/oauth/applications) (redirect URI `http://localhost`; Trakt asks for one, but WhatsOn signs in with a code and never opens it), paste its
+client ID, then approve WhatsOn with a code. New Trakt apps have no client secret; if yours is old enough to have one,
+paste that too.
 
 - Live TV gets "Your shows on tonight": new episodes of shows you watch, and watchlist movies, in the guide.
 - Library gets "Up next" from Trakt and a row of watchlist titles you don't own, with "Get it" when Radarr or Sonarr is
@@ -317,6 +318,8 @@ A link replaces whatever is playing on that TV, which is why the busy check exis
 - Sports teams and scores: ESPN's public scoreboard feed. It is **unofficial and undocumented** and
   may change without notice. Games are matched to listings by TV network and kickoff time, or by both
   team names appearing in the channel or listing.
+- Watchlist, ratings, history and recommendations (optional): Trakt, through your own Trakt app (⚙ → More → Trakt).
+  It syncs every 30 minutes while connected.
 
 </details>
 
