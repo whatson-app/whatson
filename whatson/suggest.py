@@ -121,7 +121,10 @@ def live_candidates(conn: sqlite3.Connection, cache: dict, now: int | None = Non
             mine = [name for name, tid in ((g["away"], g["away_id"]), (g["home"], g["home_id"]))
                     if (g["league"], tid) in teams]
             you_follow = f"You follow {' and '.join(mine)}: " if mine else ""
-            pool[aid] = _airing(r, now, f"{you_follow}{g['away']} at {g['home']}, {g['detail']}", "sports")
+            pool[aid] = {**_airing(r, now, f"{you_follow}{g['away']} at {g['home']}, {g['detail']}", "sports"),
+                         # The card and the AI name the game, not a listing that may only be the channel's name.
+                         "game": {"away": g["away"], "home": g["home"], "detail": g["detail"],
+                                  "league": espn.league_label(g["league"])}}
         elif norm_title(r["title"]) in recs:
             pool[aid] = _airing(r, now, "Trakt recommends it", "trakt")
         elif r["fav"] and r["begins"] <= now:
@@ -226,7 +229,8 @@ async def ai_rank(interpreter: Interpreter, key: str, candidates: list[dict], wa
             when = "on now" if c.get("on_now") else (
                 datetime.fromtimestamp(c["begins"]).strftime("%I:%M %p").lstrip("0") if c.get("begins") else "")
             if c.get("type") == "airing":
-                lines.append({"id": c["id"], "text": f"{c['title']} {c.get('subtitle') or ''} | {when} on "
+                title = f"{c['game']['away']} at {c['game']['home']}" if c.get("game") else c["title"]
+                lines.append({"id": c["id"], "text": f"{title} {c.get('subtitle') or ''} | {when} on "
                                                      f"{c['channel']['title']} | {c['kind']} | signal: {c['reason']}"})
             else:
                 mins = round((c.get("duration") or 0) / 60000)

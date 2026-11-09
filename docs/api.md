@@ -38,7 +38,7 @@ serves generated schemas at `/docs` and `/openapi.json`.
 |---|---|
 | `GET /api/search` | Search. `q`, `scope`, `ai`, `on_now`, `kind`, or `filters` to replay edited chips. `device` shows watched status for that TV's Plex user |
 | `GET /api/answer` | One line answering `q` from the matches only. Empty when AI is off |
-| `GET /api/suggest/live` | Your shows on tonight, and picks for Live TV |
+| `GET /api/suggest/live` | Picks for Live TV (`your_shows` is still returned; the page no longer shows it as a row) |
 | `GET /api/suggest/library` | Up next, picks, and watchlist titles you don't have. `device` reads as that TV's Plex user |
 
 ## Live TV

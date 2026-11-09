@@ -17,7 +17,8 @@ source.
 Show Trakt again as an optional section in ⚙ → More, beside AI search and Downloads: save your own Trakt app's client ID
 and secret, connect with a device code, sync now, and disconnect. The rows that use it come back:
 
-- Live TV: "Your shows on tonight".
+- Live TV: "Your shows on tonight". Removed again on 2026-11-08 at the maintainer's request: those shows already feed
+  "On now, picked for you", so a separate row repeated them.
 - Library: "Up next" from Trakt, and "On your watchlist, not in your library", with "Get it" when Radarr or Sonarr is
   connected for that kind. There's no Seerr link; that setting was removed.
 - Suggestions use Trakt's watchlist, recommendations, ratings and recent viewing, as `whatson/suggest.py` already did.

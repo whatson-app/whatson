@@ -95,7 +95,7 @@ Connect Trakt in ⚙ → More → Trakt. You make your own free API app at
 client ID, then approve WhatsOn with a code. New Trakt apps have no client secret; if yours is old enough to have one,
 paste that too.
 
-- Live TV gets "Your shows on tonight": new episodes of shows you watch, and watchlist movies, in the guide.
+- "On now, picked for you" in Live TV includes new episodes of shows you watch, and watchlist movies, in the guide.
 - Library gets "Up next" from Trakt and a row of watchlist titles you don't own, with "Get it" when Radarr or Sonarr is
   connected.
 - Suggestions use your watchlist, Trakt's recommendations, your ratings and what you've been watching.
