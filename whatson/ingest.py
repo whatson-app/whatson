@@ -1,10 +1,11 @@
 """Background refresh: pull guide, library and games, link games to airings, rebuild the indexes.
 
-Decisions: ADR 0005, 0014."""
+Decisions: ADR 0005, 0014, 0028."""
 
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import logging
 import re
 import sqlite3
@@ -18,6 +19,9 @@ from .sources.base import Airing, Channel, LibraryItem, Source
 log = logging.getLogger(__name__)
 GAME_SLOT_MIN_VCN = 1000  # Dispatcharr-style per-event channels; ranked after real networks
 MATCH_WINDOW = 45 * 60    # a game "airs" on a channel if kickoff is within 45 min of the listing
+FILM_MIN = 80 * 60        # a listing Plex calls a movie must run this long to be sorted as one (ADR 0028)
+SAME_SLOT = 30 * 60       # a title starting within this of the same clock time on another day is a daily show
+NOT_FILM_CHANNEL = re.compile(r"\b(news|cnbc|bloomberg|weather|qvc|hsn|shop\w*)\b", re.I)
 # Words that name a sport in a listing. Soccer counts "football" too, so a football listing never rules a soccer game out.
 SPORT_WORDS = {"football": ("football", "nfl", "ncaaf"), "basketball": ("basketball", "nba", "wnba", "ncaab"),
                "hockey": ("hockey", "nhl"), "baseball": ("baseball", "mlb"),
@@ -35,23 +39,67 @@ def _names_other_sport(text: str, league: str) -> bool:
     return any(says(sport) for sport in SPORT_WORDS if sport != mine)
 
 
+def is_placeholder(a: Airing, ch: Channel | None) -> bool:
+    """A filler listing that only repeats the channel's name, as guides do for channels they have no data for."""
+    if not ch:
+        return False
+    t = a.title.strip().casefold()
+    return bool(t) and t in {ch.title.strip().casefold(), (ch.callsign or "").strip().casefold()}
+
+
+def sort_kinds(airings: list[Airing], channels: dict[str, Channel]) -> list[Airing]:
+    """Re-sort listings a server called "movie" without saying more (no year), from patterns across the guide.
+    Plex labels every XMLTV listing a movie and passes on no genres or episode numbers, so the guide itself is the
+    only evidence (ADR 0028). Sports and listings with a year are left as they came."""
+    descs: dict[str, set[str]] = {}
+    slots: dict[tuple[str, str], list[int]] = {}
+    for a in airings:
+        descs.setdefault(a.title, set()).add(a.summary.strip()[:80])
+        slots.setdefault((a.title, a.channel_id), []).append(a.begins)
+
+    def daily(a: Airing) -> bool:
+        def clock(ts: int) -> int:
+            lt = time.localtime(ts)
+            return lt.tm_hour * 3600 + lt.tm_min * 60
+        days = {(time.localtime(b).tm_yday, clock(b)) for b in slots[(a.title, a.channel_id)]}
+        return any(d1 != d2 and min(abs(c1 - c2), 86400 - abs(c1 - c2)) <= SAME_SLOT
+                   for d1, c1 in days for d2, c2 in days)
+
+    out = []
+    for a in airings:
+        ch = channels.get(a.channel_id)
+        kind = a.kind
+        if a.kind == "movie" and not a.year:
+            if is_placeholder(a, ch) or a.title.lower().startswith("live") or (
+                    ch and NOT_FILM_CHANNEL.search(f"{ch.title} {ch.callsign}")):
+                kind = "other"
+            elif len(descs[a.title]) >= 2 or daily(a) or a.ends - a.begins < FILM_MIN:
+                kind = "episode"
+        out.append(a if kind == a.kind else dataclasses.replace(a, kind=kind))
+    return out
+
+
 def link_games(airings: list[Airing], channels: dict[str, Channel],
                games: list[espn.Game]) -> dict[int, espn.Game]:
     """Return {airing index: game}. A sports airing matches a game when its channel carries
     one of the game's networks and kickoff falls inside (or just before) the listing, or when
-    the channel/listing names both teams (event channels such as 'NCAAF 01: X at Y')."""
+    the channel/listing names both teams (event channels such as 'NCAAF 01: X at Y'). A placeholder listing
+    (just the channel's name) on the game's network counts too, since that's how channels without guide data
+    look (ADR 0028)."""
     out: dict[int, espn.Game] = {}
     for i, a in enumerate(airings):
-        if a.kind != "sports":
-            continue
         ch = channels.get(a.channel_id)
+        placeholder = is_placeholder(a, ch)
+        if a.kind != "sports" and not placeholder:
+            continue
         ch_title = f"{ch.title} {ch.callsign}" if ch else ""
         text = f"{ch_title} {a.title} {a.subtitle}".lower()
         best, best_gap = None, None
         for g in games:
             in_window = a.begins - MATCH_WINDOW <= g.starts < a.ends
-            # Event channels name the teams all day; only the listing around kickoff is the game.
-            named = g.home.lower() in text and g.away.lower() in text and a.begins - 3 * 3600 <= g.starts < a.ends
+            # Event channels name the teams all day; only the listing around kickoff is the game. One that starts
+            # well after kickoff is a replay.
+            named = g.home.lower() in text and g.away.lower() in text and a.begins - MATCH_WINDOW <= g.starts < a.ends
             on_network = any(espn.network_matches(n, ch_title) for n in g.networks)
             if named or (in_window and on_network and not _names_other_sport(text, g.league)):
                 gap = abs(g.starts - a.begins)
@@ -80,7 +128,7 @@ def write_guide(conn: sqlite3.Connection, channels: list[Channel], airings: list
             cur = conn.execute(
                 "INSERT INTO airings (channel_id, title, subtitle, summary, kind, begins, ends, year, game_id) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (a.channel_id, a.title, a.subtitle, a.summary, a.kind, a.begins, a.ends, a.year,
+                (a.channel_id, a.title, a.subtitle, a.summary, "sports" if game else a.kind, a.begins, a.ends, a.year,
                  game.id if game else None))
             ch = by_id.get(a.channel_id)
             extra = " ".join(game.terms + [game.name, game.league.split("/")[-1]]) if game else ""
@@ -147,6 +195,7 @@ class Refresher:
         channels, airings = await source.load_guide(now - 3 * 3600, now + self.s.guide_hours * 3600)
         if source is not self.source:
             return  # switched servers while this was loading: don't write the old one's guide over the new one
+        airings = sort_kinds(airings, {c.id: c for c in channels})
         write_guide(self.conn, channels, airings, self.games)
         db.set_meta(self.conn, "guide_refreshed", str(now))
         log.info("guide: %d channels, %d airings", len(channels), len(airings))

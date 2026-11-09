@@ -13,6 +13,7 @@ scripts when Node.js is installed. CI also runs gitleaks over the whole history,
 
 | File | What it covers |
 |---|---|
+| `tests/test_guide_kinds.py` | Sorting bare guide listings into movies, shows and other, and linking placeholders to games |
 | `tests/test_guards.py` | The rules in `AGENTS.md` that a test can check. See [ADR 0021](adr/0021-rules-enforced-by-guard-tests.md) |
 | `tests/test_docs.py` | ADR format and index, links and paths, and that the reference docs cover the code |
 | `tests/test_core.py` | Linking games to listings, and search |

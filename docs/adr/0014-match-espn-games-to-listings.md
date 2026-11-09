@@ -20,6 +20,9 @@ Use ESPN's scoreboard feed for games and scores, and link a game to a sports lis
 - The channel or listing names both teams, and kickoff falls from 3 hours before the listing up to its end. This handles
   event channels, which name the teams all day.
 
+[ADR 0028](0028-sort-bare-guide-listings.md) (2026-11-08) narrows the second rule to 45 minutes, so a replay doesn't
+link, and lets the first rule link placeholder listings that only repeat the channel's name.
+
 A linked airing stores `game_id` and gets the teams' names in its search index. Games refresh first, so the guide can link
 them, every few minutes, and every 30 seconds while a followed team or league is playing.
 

@@ -4,6 +4,16 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Fixed
+- **Movies and Shows views work on bare guides.** Plex calls every listing from an XMLTV guide a movie, so news, reality
+  shows and cartoons all showed under Movies and Shows was empty. Listings are now sorted from the guide itself: a title
+  with different descriptions, or on at the same time on another day, or under 80 minutes is a show; placeholders,
+  "Live" titles and news or shopping channels are neither. ADR 0028.
+- **A game on a channel with no guide data shows on that channel.** A placeholder block (just the channel's name) on the
+  game's network now links to the game, so it appears there, under Sports and in "On now, picked for you". A replay that
+  names both teams but starts well after kickoff no longer counts as the game.
+- "NBC News Now", "FOX News" and similar channels no longer count as carrying a game on that broadcast network.
+
 ## 0.2.3 - 2026-11-08
 
 ### Added
