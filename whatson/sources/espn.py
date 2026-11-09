@@ -185,6 +185,18 @@ def league_label(league: str) -> str:
     return LEAGUE_LABELS.get(league, league.split("/")[-1].replace("-", " ").title())
 
 
+def game_url(game_id: str) -> str:
+    """The game's page on espn.com (Gamecast), from a WhatsOn game id such as "football/nfl:401873050". A link the
+    viewer opens, never fetched by WhatsOn. "" for an id that isn't an ESPN event."""
+    league, _, event = (game_id or "").rpartition(":")
+    sport, _, name = league.partition("/")
+    if not (sport and name and event.isdigit()):
+        return ""
+    if sport == "soccer":
+        return f"https://www.espn.com/soccer/match/_/gameId/{event}"
+    return f"https://www.espn.com/{name}/game/_/gameId/{event}"
+
+
 async def fetch_teams(league: str, http: httpx.AsyncClient) -> list[dict]:
     r = await http.get(TEAMS.format(league=league), params={"limit": "1000"})
     r.raise_for_status()

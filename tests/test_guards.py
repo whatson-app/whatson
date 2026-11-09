@@ -201,6 +201,8 @@ OUTSIDE_HOSTS = {
     # Links that open an app on a TV; WhatsOn never calls these itself.
     "app.primevideo.com", "play.max.com", "tv.apple.com", "tv.youtube.com", "www.disneyplus.com", "www.hulu.com",
     "www.netflix.com", "www.paramountplus.com", "www.peacocktv.com", "www.youtube.com",
+    # A link people open from the now-playing card (the game on ESPN, and the credit); WhatsOn never calls it itself.
+    "www.espn.com",
 }
 HOST = re.compile(r"https?://([A-Za-z][\w-]*(?:\.[\w-]+)+)")
 

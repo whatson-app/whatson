@@ -118,20 +118,25 @@ async def now_playing(device_id: int):
         if s.live:
             channel = s.channel_id or _live_channel(device_id, s.title)
             row = state.conn.execute(
-                """SELECT a.title, a.subtitle, a.begins, a.ends, c.vcn, c.title AS ch, c.thumb AS ch_thumb,
-                          g.away, g.home, g.away_score, g.home_score, g.detail, g.state AS gstate
+                """SELECT a.id AS aid, a.title, a.subtitle, a.summary, a.begins, a.ends, c.vcn, c.title AS ch,
+                          c.thumb AS ch_thumb, g.id AS gid, g.league, g.away, g.home, g.away_score, g.home_score,
+                          g.away_logo, g.home_logo, g.detail, g.state AS gstate
                    FROM channels c LEFT JOIN airings a ON a.channel_id = c.id AND a.begins <= ? AND a.ends > ?
                    LEFT JOIN games g ON g.id = a.game_id WHERE c.id = ?""",
                 (int(time.time()), int(time.time()), channel)).fetchone() if channel else None
             if row:
-                out.update(title=row["title"] or row["ch"], subtitle="", channel={"vcn": row["vcn"], "title": row["ch"],
-                           "thumb": row["ch_thumb"], "id": channel})
+                out.update(title=row["title"] or row["ch"], subtitle="", summary=row["summary"] or "",
+                           airing_id=row["aid"], channel={"vcn": row["vcn"], "title": row["ch"],
+                                                          "thumb": row["ch_thumb"], "id": channel})
                 if row["begins"]:
                     out.update(offset=(int(time.time()) - row["begins"]) * 1000,
                                duration=(row["ends"] - row["begins"]) * 1000)
                 if row["away"]:
-                    out["game"] = {"away": row["away"], "home": row["home"], "away_score": row["away_score"],
-                                   "home_score": row["home_score"], "detail": row["detail"], "state": row["gstate"]}
+                    out["game"] = {"id": row["gid"], "league": espn.league_label(row["league"]),
+                                   "away": row["away"], "home": row["home"], "away_score": row["away_score"],
+                                   "home_score": row["home_score"], "away_logo": row["away_logo"],
+                                   "home_logo": row["home_logo"], "detail": row["detail"], "state": row["gstate"],
+                                   "espn_url": espn.game_url(row["gid"])}
         return remember(key, out)
     drv = state.drivers.get(d["kind"])
     st = await drv.status(d["host"])
@@ -182,9 +187,15 @@ async def _stop_key(device_id: int, d: dict) -> str:
     return "MEDIA_STOP" if (await now_playing(device_id))["state"] == "app" else "BACK"
 
 
+# The now-playing bar and card. In Plezy, MEDIA_REWIND skips back by its small seek time (10 s unless changed), or a
+# chapter when the item has chapters.
+NOW_KEYS = {"play_pause": "MEDIA_PLAY_PAUSE", "stop": "MEDIA_STOP", "back": "BACK", "home": "HOME",
+            "rewind": "MEDIA_REWIND", "volume_up": "VOLUME_UP", "volume_down": "VOLUME_DOWN", "volume_mute": "VOLUME_MUTE"}
+
+
 @router.post("/devices/{device_id}/key")
 async def press_key(device_id: int, body: KeyIn):
-    keys = {"play_pause": "MEDIA_PLAY_PAUSE", "stop": "MEDIA_STOP", "back": "BACK", "home": "HOME"}
+    keys = NOW_KEYS
     if body.key not in keys:
         raise HTTPException(400, f"Keys: {', '.join(keys)}")
     d = _device(device_id)

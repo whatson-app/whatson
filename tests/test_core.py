@@ -277,3 +277,23 @@ def test_soccer_listing_called_football_still_matches_a_soccer_game():
     channels = {"7": Channel("7", "7", "FOX 6 KDEM")}
     airings = [Airing("7", "Live: International Football", "", "", "sports", NOW - 4000, NOW + 3000)]
     assert 0 in link_games(airings, channels, [game(id="soccer/usa.1:1", league="soccer/usa.1", networks=["FOX"])])
+
+
+def test_game_url_points_at_the_game_on_espn():
+    assert espn.game_url("football/nfl:401873050") == "https://www.espn.com/nfl/game/_/gameId/401873050"
+    assert espn.game_url("football/college-football:42") == "https://www.espn.com/college-football/game/_/gameId/42"
+    assert espn.game_url("soccer/eng.1:7") == "https://www.espn.com/soccer/match/_/gameId/7"
+    assert espn.game_url("") == "" and espn.game_url("football/nfl:abc") == ""
+
+
+def test_tapping_the_now_bar_never_plays_anything():
+    # The page treats any element with data-rating-key as a Play button, so the bar must not carry one.
+    player = (Path(__file__).resolve().parent.parent / "whatson" / "static" / "js" / "player.js").read_text(encoding="utf-8")
+    assert "bar.dataset.ratingKey" not in player and "openNowCard" in player
+
+
+def test_now_card_keys_are_real_android_keys():
+    from whatson.remote_routes import KEYS
+    from whatson.routes import NOW_KEYS
+    assert {"rewind", "volume_up", "volume_down", "volume_mute", "play_pause"} <= set(NOW_KEYS)
+    assert set(NOW_KEYS.values()) <= KEYS
