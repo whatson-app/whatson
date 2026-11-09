@@ -297,3 +297,10 @@ def test_now_card_keys_are_real_android_keys():
     from whatson.routes import NOW_KEYS
     assert {"rewind", "volume_up", "volume_down", "volume_mute", "play_pause"} <= set(NOW_KEYS)
     assert set(NOW_KEYS.values()) <= KEYS
+
+
+def test_now_card_keeps_the_tv_connection_warm():
+    # A fresh remote connection can stall live video in Plezy, so the card opens one when it appears, not on a press.
+    player = (Path(__file__).resolve().parent.parent / "whatson" / "static" / "js" / "player.js").read_text(encoding="utf-8")
+    assert "keepTvWarm()" in player and "/api/remote/${selectedId()}" in player
+
