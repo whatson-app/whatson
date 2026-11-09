@@ -1,11 +1,13 @@
-// The selected TV: picker, tuning, and the now-playing bar with pause/stop.
+// The selected TV: picker, tuning, and the now-playing bar with pause/stop. Tapping the bar opens a card about
+// what's on: the listing, or for a game the live score, a catch-up and the latest plays from ESPN.
 
-import { $, api, confirmDialog, esc, store, thumbUrl, toast } from "./core.js";
+import { $, ai, aiPlaceholder, api, confirmDialog, esc, fmtMins, openSheet, store, thumbUrl, toast, working } from "./core.js";
 
 export let devices = [];
 let onNeedPair = () => {};
 let onOpenSettings = () => {};
 let nowTimer = null;
+let nowShown = null;  // what the bar shows, for the card. Not on the bar itself: data-rating-key there means Play.
 
 export const setPairHandler = (fn) => { onNeedPair = fn; };
 export const setSettingsHandler = (fn) => { onOpenSettings = fn; };
@@ -108,8 +110,7 @@ export async function refreshNow() {
     const n = await api(`/api/devices/${id}/now`);
     bar.innerHTML = nowHtml(n);
     bar.dataset.state = n.state;
-    bar.dataset.ratingKey = n.show_key || n.rating_key || "";
-    bar.dataset.kind = n.kind;
+    nowShown = n;
   } catch {
     bar.innerHTML = '<div class="now-text"><div class="now-sub">Now playing unavailable</div></div>';
   }
@@ -128,10 +129,75 @@ export function initPlayer() {
       b.disabled = false;
       return;
     }
-    // Tapping the bar jumps to what's playing.
-    const bar = ev.currentTarget;
-    if (bar.dataset.kind === "live") location.hash = "#/live";
-    else if (bar.dataset.ratingKey && bar.dataset.kind === "episode") location.hash = `#/library/show/${bar.dataset.ratingKey}`;
+    if (nowShown && ["playing", "paused", "buffering"].includes(nowShown.state)) openNowCard(nowShown);
   });
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshNow(); });
+}
+
+// --- What's on: the card behind the bar --------------------------------------------------------------
+
+const ESPN_CREDIT = '<p class="credit">Scores and plays from <a href="https://www.espn.com" target="_blank" rel="noopener">ESPN</a></p>';
+
+function nowCardHtml(n) {
+  const g = n.game;
+  const pct = n.duration ? Math.min(100, Math.round((n.offset / n.duration) * 100)) : 0;
+  const progress = pct ? `<div class="now-bar card-bar"><div style="width:${pct}%"></div></div>` : "";
+  const channel = n.channel ? `${esc(n.channel.vcn)} ${esc(n.channel.title)}` : "";
+  if (g) {
+    const team = (name, logo, score) => `<span class="team">${logo ? `<img src="${esc(logo)}" alt="" onerror="this.remove()">` : ""}${esc(name)}</span><b>${esc(score)}</b>`;
+    return `
+      <div class="meta">${g.state === "in" ? '<span class="live">LIVE</span> ' : ""}${esc(g.league)} · ${esc(g.detail)}${channel ? ` · ${channel}` : ""}</div>
+      <h2 class="sheet-title">${esc(g.away)} at ${esc(g.home)}</h2>
+      <div class="score score-big">${team(g.away, g.away_logo, g.away_score)}${team(g.home, g.home_logo, g.home_score)}</div>
+      <div class="chips">
+        ${g.state === "in" ? `<button class="chip" data-now-recap="${esc(g.id)}">Catch me up</button>` : ""}
+        <button class="chip" data-now-plays="${esc(g.id)}">Latest plays</button>
+        ${g.espn_url ? `<a class="chip" href="${esc(g.espn_url)}" target="_blank" rel="noopener">Game on ESPN ↗</a>` : ""}
+      </div>
+      <div class="recap" id="now-recap" hidden></div>
+      ${ESPN_CREDIT}`;
+  }
+  if (n.kind === "live") {
+    return `
+      <div class="meta"><span class="live">LIVE</span>${channel ? ` ${channel}` : ""}</div>
+      <h2 class="sheet-title">${esc(n.title)}</h2>
+      ${n.subtitle ? `<div class="sub">${esc(n.subtitle)}</div>` : ""}
+      ${progress}
+      ${n.summary ? `<p>${esc(n.summary)}</p>` : ""}
+      ${n.airing_id ? `<div class="chips"><button class="chip" data-airing="${esc(n.airing_id)}">Times and channels</button></div>` : ""}`;
+  }
+  const isShow = n.kind === "episode" && n.show_key;
+  const left = n.duration ? fmtMins(Math.max(0, n.duration - n.offset)) : "";
+  return `
+    <div class="now-card">
+      ${n.thumb ? `<img class="now-poster" src="${thumbUrl(n.thumb, 240)}" alt="">` : ""}
+      <div>
+        <div class="meta">${n.state === "paused" ? "Paused" : "Playing"}${left ? ` · ${left} left` : ""}</div>
+        <h2 class="sheet-title">${esc(n.title)}</h2>
+        ${n.subtitle ? `<div class="sub">${esc(n.subtitle)}</div>` : ""}
+        ${progress}
+        <div class="chips">${isShow ? `<button class="chip" data-show="${esc(n.show_key)}">Open the show</button>`
+          : n.rating_key && n.kind === "movie" ? `<button class="chip" data-movie="${esc(n.rating_key)}">About this movie</button>` : ""}</div>
+      </div>
+    </div>`;
+}
+
+async function fillFromEspn(gameId, plays) {
+  const box = $("#now-recap");
+  if (!box) return;
+  box.hidden = false;
+  box.innerHTML = !plays && ai.on ? aiPlaceholder("AI is catching you up…") : `<div class="ai-line">${working("Loading from ESPN…")}</div>`;
+  try {
+    const r = await api(`/api/sports/recap?game_id=${encodeURIComponent(gameId)}`);
+    box.innerHTML = !plays && r.recap ? `<span class="spark" aria-hidden="true">✦</span> ${esc(r.recap)}`
+      : r.plays.length ? `<ul>${r.plays.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : "No plays yet.";
+  } catch (e) {
+    box.textContent = e.message;
+  }
+}
+
+function openNowCard(n) {
+  const body = openSheet(nowCardHtml(n));
+  body.querySelector("[data-now-recap]")?.addEventListener("click", (ev) => fillFromEspn(ev.currentTarget.dataset.nowRecap, false));
+  body.querySelector("[data-now-plays]")?.addEventListener("click", (ev) => fillFromEspn(ev.currentTarget.dataset.nowPlays, true));
 }
