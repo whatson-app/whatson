@@ -82,6 +82,21 @@ def live_shows(conn: sqlite3.Connection, cache: dict, now: int | None = None) ->
     return sorted(out.values(), key=lambda x: (not x["on_now"], x["begins"]))[:12]
 
 
+def _game_listings(rows: list[sqlite3.Row], games: dict, now: int) -> dict[str, int]:
+    """{game id: airing id} for games that are live or start within the hour, one listing each: the one on now,
+    then the one starting nearest kickoff. That leaves out games already over and later replays of a game,
+    so one game is one candidate however many channels carry it."""
+    best: dict[str, tuple[tuple, int]] = {}
+    for r in rows:
+        g = games.get(r["game_id"]) if r["game_id"] else None
+        if not g or g["state"] == "post" or not (g["state"] == "in" or g["starts"] <= now + 3600):
+            continue
+        rank = (not r["begins"] <= now < r["ends"], abs(r["begins"] - g["starts"]))
+        if g["id"] not in best or rank < best[g["id"]][0]:
+            best[g["id"]] = (rank, r["id"])
+    return {gid: aid for gid, (_, aid) in best.items()}
+
+
 def live_candidates(conn: sqlite3.Connection, cache: dict, now: int | None = None) -> list[dict]:
     """Pool for 'On now, picked for you': things on now or within the hour on favorite channels,
     your Trakt matches, Trakt recommendations in the guide, and live games in followed leagues."""
@@ -95,12 +110,13 @@ def live_candidates(conn: sqlite3.Connection, cache: dict, now: int | None = Non
         if s["begins"] <= now + 3600:
             pool[s["id"]] = s
     games = {g["id"]: g for g in conn.execute("SELECT * FROM games")}
+    best = _game_listings(rows, games, now)
     for r in rows:
         aid = f"a{r['id']}"
         if aid in pool:
             continue
         g = games.get(r["game_id"]) if r["game_id"] else None
-        if g and (g["state"] == "in" or g["starts"] <= now + 3600) and (
+        if g and best.get(g["id"]) == r["id"] and (
                 g["league"] in followed or espn.is_followed_game(teams, g["league"], g["home_id"], g["away_id"])):
             mine = [name for name, tid in ((g["away"], g["away_id"]), (g["home"], g["home_id"]))
                     if (g["league"], tid) in teams]

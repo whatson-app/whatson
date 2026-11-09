@@ -5,6 +5,9 @@ What changed in each version of WhatsOn, newest first.
 ## Unreleased
 
 ### Fixed
+- "On now, picked for you" shows each game once, on the channel airing it now, and leaves out games that are already over
+  and later replays. A sports listing for another sport, such as soccer on Fox Soccer Plus, is no longer matched to a
+  game on Fox.
 - Suggestion rows only show the AI badge when AI really ranked them, not whenever AI is set up. Sports picks now tell
   the AI which followed team is playing, as its prompt said they would.
 

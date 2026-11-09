@@ -15,6 +15,8 @@ Use ESPN's scoreboard feed for games and scores, and link a game to a sports lis
 (`whatson/ingest.py`) when either:
 
 - The channel carries one of the game's networks, and kickoff falls from 45 minutes before the listing up to its end.
+  Not when the listing names a different sport, because a network's name can be part of another channel's name
+  ("Fox Soccer Plus" for a game on Fox). Added 2026-11-08.
 - The channel or listing names both teams, and kickoff falls from 3 hours before the listing up to its end. This handles
   event channels, which name the teams all day.
 
