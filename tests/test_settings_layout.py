@@ -17,7 +17,7 @@ def test_settings_has_the_four_tabs_in_order():
 
 
 def test_every_place_points_at_a_real_tab_and_section():
-    assert len(PLACES) == 10
+    assert len(PLACES) == 11
     for tab, fold in PLACES.values():
         assert f'<section data-panel="{tab}"' in HTML
         if fold:
@@ -31,5 +31,5 @@ def test_every_link_into_settings_has_a_place():
 
 def test_every_section_kept_its_controls():
     for control in ('id="px-signin"', 'id="px-manual"', 'id="jf-form"', 'id="jf-user"', 'id="add-tv"', 'id="sp-leagues"',
-                    'id="dl-allow"', 'name="theme"'):
+                    'id="dl-allow"', 'name="theme"', 'id="tk-app-form"', 'id="tk-connect"'):
         assert control in HTML, control

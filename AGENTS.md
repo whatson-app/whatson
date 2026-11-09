@@ -110,8 +110,7 @@ dependencies, colours, and that paths named in the `AGENTS.md` files exist.
 
 ## Don't do these without being asked
 
-- **Add a login, or a Seerr add mode.** Both were decided against. Trakt is deliberately out of the
-  interface for now, so don't wire it back in.
+- **Add a login, or a Seerr add mode.** Both were decided against.
 - **Add a dependency, a build step or a front-end framework.** The front end has no build step, on purpose.
 - **Add a linter or formatter, or reformat code.**
 - **Change `.github/workflows`, bump the version, or create tags and releases.** Those are for maintainers.

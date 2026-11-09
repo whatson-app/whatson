@@ -1,5 +1,5 @@
 // Settings: Server (Plex or Jellyfin, each with its connection), TVs (+ pairing wizard), Sports (leagues and teams),
-// More: AI search (+ model dropdown), Downloads (Radarr/Sonarr, in get.js), Appearance.
+// More: AI search (+ model dropdown), Trakt, Downloads (Radarr/Sonarr, in get.js), Appearance.
 
 import { $, $$, api, applyTheme, confirmDialog, debounce, esc, store, toast } from "./core.js";
 import { devices, loadDevices, selectDevice } from "./player.js";
@@ -9,10 +9,10 @@ import { initDownloadsSettings, loadDownloadsSettings } from "./get.js";
 const PLACES = {
   server: ["server"], source: ["server"], plex: ["server", "plex"], jellyfin: ["server", "jellyfin"],
   tvs: ["tvs"], sports: ["sports"],
-  more: ["more"], ai: ["more", "ai"], downloads: ["more", "downloads"], appearance: ["more", "appearance"],
+  more: ["more"], ai: ["more", "ai"], trakt: ["more", "trakt"], downloads: ["more", "downloads"], appearance: ["more", "appearance"],
 };
 
-const moreLoader = (name) => ({ ai: loadAI, downloads: loadDownloadsSettings, appearance: loadAppearance })[name];
+const moreLoader = (name) => ({ ai: loadAI, trakt: loadTrakt, downloads: loadDownloadsSettings, appearance: loadAppearance })[name];
 const showError = (e) => toast(e.message);
 
 export function openSettings(place = "tvs") {
@@ -483,8 +483,62 @@ export const wizard = {
 
 // --- Wiring ------------------------------------------------------------------------------------------
 
+// --- Trakt ------------------------------------------------------------------------------------------
+
+let traktPoll = null;
+
+async function loadTrakt() {
+  const t = await api("/api/trakt");
+  $("#tk-app-state").textContent = t.configured ? `(saved ${t.client_id_hint})` : "(not set)";
+  $("#tk-connected").hidden = !t.connected;
+  $("#tk-connect").hidden = t.connected || !t.configured;
+  $("#tk-user").textContent = t.user || "connected";
+  $("#tk-synced").textContent = t.synced_at ? `Last synced ${new Date(t.synced_at * 1000).toLocaleString()}` : "Syncing…";
+  $("#tk-app").open = !t.configured;
+}
+
+async function startTrakt() {
+  const box = $("#tk-device");
+  try {
+    const d = await api("/api/trakt/connect", { method: "POST" });
+    box.hidden = false;
+    box.innerHTML = `<p>Go to <a href="${esc(d.verification_url)}" target="_blank" rel="noopener">${esc(d.verification_url)}</a> and enter</p>
+      <div class="code-big">${esc(d.user_code)}</div><p class="hint">Waiting for you to approve…</p>`;
+    clearInterval(traktPoll);
+    traktPoll = setInterval(async () => {
+      const r = await api("/api/trakt/poll", { method: "POST" }).catch(() => ({ status: "pending" }));
+      if (r.status === "pending") return;
+      clearInterval(traktPoll);
+      box.innerHTML = r.status === "connected" ? `<p class="msg ok">✓ Connected as ${esc(r.user)}. Syncing your watchlist and history…</p>`
+        : `<p class="msg err">${r.status === "denied" ? "Access was denied on Trakt." : "The code expired."} Try again.</p>`;
+      loadTrakt().catch(showError);
+    }, Math.max(5, d.interval) * 1000);
+  } catch (e) { toast(e.message); }
+}
+
+function initTrakt() {
+  $("#tk-app-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      await api("/api/trakt/app", { method: "PUT", body: { client_id: ev.target.client_id.value, client_secret: ev.target.client_secret.value } });
+      ev.target.reset();
+      await loadTrakt();
+      toast("Trakt app saved. Now connect your account.");
+    } catch (e) { toast(e.message); }
+  });
+  $("#tk-connect").addEventListener("click", startTrakt);
+  $("#tk-sync").addEventListener("click", async () => {
+    try { await api("/api/trakt/sync", { method: "POST" }); await loadTrakt(); toast("Synced."); } catch (e) { toast(e.message); }
+  });
+  $("#tk-disconnect").addEventListener("click", async () => {
+    if (!await confirmDialog("Disconnect Trakt? Suggestions go back to your library and guide alone.", "Disconnect")) return;
+    try { await api("/api/trakt/disconnect", { method: "POST" }); $("#tk-device").hidden = true; await loadTrakt(); } catch (e) { toast(e.message); }
+  });
+}
+
 export function initSettings() {
   initDownloadsSettings();
+  initTrakt();
   $("#settings").addEventListener("click", (ev) => {
     const b = ev.target.closest("button");
     if (!b) return;

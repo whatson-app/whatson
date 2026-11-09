@@ -141,10 +141,9 @@ serves generated schemas at `/docs` and `/openapi.json`.
 | `PUT /api/settings/downloads/{kind}` | Save settings for `movie` (Radarr) or `show` (Sonarr) |
 | `POST /api/settings/downloads/{kind}/test` | Try the connection and read its options |
 
-## No interface yet
+## Trakt
 
-These routes work, but nothing in the front end calls them. See [ADR 0018](adr/0018-trakt-stays-out-of-the-interface.md) and
-[ADR 0017](adr/0017-radarr-sonarr-add-and-search-only.md).
+⚙ → More → Trakt. See [ADR 0027](adr/0027-trakt-back-in-the-interface.md).
 
 | Route | What it does |
 |---|---|

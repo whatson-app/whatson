@@ -227,11 +227,6 @@ def test_no_new_dependencies_or_build_step():
     assert not (ROOT / "package.json").exists(), "the front end has no build step, on purpose"
 
 
-def test_trakt_stays_out_of_the_interface():
-    hits = [rel(p) for p in [*JS, *HTML] if "/api/trakt" in read(p)]
-    assert not hits, f"{hits} call Trakt. It's deliberately out of the interface for now (AGENTS.md)"
-
-
 # -- Front end ------------------------------------------------------------------------------------------------------
 
 def test_no_running_text_as_code():

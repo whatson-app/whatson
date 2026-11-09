@@ -1,6 +1,6 @@
 # 0018. Trakt stays in the code but out of the interface
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR 0027
 - **Date:** 2026-11-03
 
 ## Context

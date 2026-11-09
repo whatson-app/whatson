@@ -22,6 +22,7 @@ scripts when Node.js is installed. CI also runs gitleaks over the whole history,
 | `tests/test_plex_auth.py` | Plex sign-in and tokens |
 | `tests/test_plex_users.py` | A Plex Home user for each TV |
 | `tests/test_suggest.py` | Suggestion rows |
+| `tests/test_trakt.py` | Trakt token refresh and its redirect URI |
 | `tests/test_settings_layout.py` | Settings tabs and links into them |
 | `tests/test_progress_ui.py` | Wiring for search and AI progress |
 | `tests/test_release.py` | Release notes and version checks |

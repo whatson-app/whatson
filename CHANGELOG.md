@@ -4,15 +4,20 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Added
+- **Trakt is back**, in ⚙ → More → Trakt: connect with your own free Trakt app for "Your shows on tonight", "Up next"
+  from Trakt, a row of watchlist titles you don't own (with "Get it" when Radarr or Sonarr is connected) and suggestions
+  that use your ratings and viewing. ADR 0027 replaces ADR 0018. Register the Trakt app with the redirect URI
+  `http://localhost`. New Trakt apps have no client secret, so sign-in uses PKCE; older apps with a secret and
+  `urn:ietf:wg:oauth:2.0:oob` keep working.
+- **How AI works** in the README: what each AI feature is sent, what's checked and what isn't.
+
 ### Fixed
 - "On now, picked for you" shows each game once, on the channel airing it now, and leaves out games that are already over
   and later replays. A sports listing for another sport, such as soccer on Fox Soccer Plus, is no longer matched to a
   game on Fox.
 - Suggestion rows only show the AI badge when AI really ranked them, not whenever AI is set up. Sports picks now tell
   the AI which followed team is playing, as its prompt said they would.
-
-### Added
-- **How AI works** in the README: what each AI feature is sent, what's checked and what isn't.
 
 ## 0.2.2 - 2026-11-03
 

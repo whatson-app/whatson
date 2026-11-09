@@ -157,6 +157,30 @@
         </form>
         <p class="hint">Keys are kept on the WhatsOn server and are never shown again in full.</p>
       </details>
+      <details class="fold" id="fold-trakt" name="more">
+        <summary><span>Trakt<small>Watchlist, ratings and history</small></span></summary>
+        <p class="hint">Optional. Connect Trakt for your shows airing tonight, your watchlist, “Up next” and suggestions
+          that know what you like. Ratings and recent shows are sent to AI only if AI search is on.</p>
+        <div id="tk-connected" class="card" hidden>
+          <div class="row"><b>Trakt: <span id="tk-user"></span></b><span class="hint" id="tk-synced"></span></div>
+          <div class="row"><button type="button" id="tk-sync">Sync now</button><button type="button" id="tk-disconnect">Disconnect</button></div>
+        </div>
+        <button type="button" id="tk-connect" class="primary wide" hidden>Connect your Trakt account</button>
+        <div id="tk-device" class="card" hidden></div>
+        <details id="tk-app">
+          <summary>Your Trakt app <span id="tk-app-state" class="hint"></span></summary>
+          <p class="hint">Each WhatsOn needs its own free Trakt API app. Create one at
+            <a href="https://trakt.tv/oauth/applications" target="_blank" rel="noopener">trakt.tv/oauth/applications</a>
+            with the redirect URI <code>http://localhost</code> (Trakt asks for one, but sign-in here uses a code and never
+            opens it), then paste its client ID here. Newer Trakt apps have no client secret; leave that empty.</p>
+          <form id="tk-app-form" class="stack">
+            <label>Client ID <input name="client_id" autocomplete="off"></label>
+            <label>Client secret <span class="hint">(only older apps have one)</span>
+              <input name="client_secret" type="password" autocomplete="off"></label>
+            <div class="row"><button type="submit" class="primary">Save</button></div>
+          </form>
+        </details>
+      </details>
       <details class="fold" id="fold-downloads" name="more">
         <summary><span>Downloads<small>Radarr and Sonarr</small></span></summary>
         <p class="hint">Connect Radarr and Sonarr to find movies and shows you don't have and add them.

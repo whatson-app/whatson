@@ -32,7 +32,8 @@ async function loadForYou() {
     const s = await api("/api/suggest/live");
     const scroll = (items) => `<div class="hscroll">${items.map(airingCard).join("")}</div>`;
     $("#live-foryou").innerHTML =
-      row(s.ai ? "On now, picked for you" : "On now for you", s.picks.length ? scroll(s.picks) : "", { badge: s.ai ? "AI" : "" });
+      row("Your shows on tonight", s.your_shows.length ? scroll(s.your_shows) : "", { badge: "Trakt" })
+      + row(s.ai ? "On now, picked for you" : "On now for you", s.picks.length ? scroll(s.picks) : "", { badge: s.ai ? "AI" : "" });
   } catch {  // suggestions are optional
     const box = $("#live-foryou");
     if (box) box.innerHTML = "";
