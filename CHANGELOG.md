@@ -14,6 +14,9 @@ What changed in each version of WhatsOn, newest first.
 ### Changed
 - Live TV no longer has a separate "Your shows on tonight" row. With Trakt connected, those shows are still among the
   candidates for "On now, picked for you".
+- **Settings has more room.** Each TV is its own box with its buttons on one line; your Trakt account and last sync
+  stack instead of squeezing side by side; followed teams are one per row with the league on the right; the Downloads
+  test result sits under its button; opened sections get a divider; and on phones the dialog uses more of the screen.
 
 ### Fixed
 - A game on ESPN no longer also shows on ESPN 2, ESPNU, ESPNews or ESPN8 The Ocho, and a game on FOX no longer shows on
