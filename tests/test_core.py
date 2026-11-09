@@ -23,6 +23,9 @@ def game(**kw) -> Game:
 def test_network_matching():
     assert network_matches("FS1", "FOX SPORTS 1")
     assert not network_matches("FOX", "FOX SPORTS 1")
+    assert not network_matches("NBC", "NBC News Now")
+    assert not network_matches("FOX", "FOX Business")
+    assert network_matches("NBC", "NBC 5 KDEM Lakemont")
     assert network_matches("FOX", "FOX 32 KDEM Lakemont")
     assert network_matches("FOX", "8 FOX 32 KDEM Lakemont")
     assert network_matches("BTN", "BIG TEN NETWORK")

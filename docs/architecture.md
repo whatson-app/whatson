@@ -91,7 +91,8 @@ Default intervals: games 5 minutes (30 seconds while a followed team or league i
 
 1. Ask the source for its server id, and save it as `machine_id`. Plezy links need it.
 2. Fetch games from ESPN for the configured and followed leagues. An empty result leaves the old games in place.
-3. Load the guide from 3 hours ago to `GUIDE_HOURS` ahead. `link_games` matches sports listings to games
+3. Load the guide from 3 hours ago to `GUIDE_HOURS` ahead. `sort_kinds` re-sorts listings the server called a movie
+   without saying more ([ADR 0028](adr/0028-sort-bare-guide-listings.md)). `link_games` matches sports and placeholder listings to games
    ([ADR 0014](adr/0014-match-espn-games-to-listings.md)), and `write_guide` replaces the tables and search index in one
    transaction.
 4. Load the library the same way.

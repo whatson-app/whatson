@@ -61,7 +61,8 @@ def network_matches(network: str, channel_title: str) -> bool:
     net = network.strip()
     if net.upper() in BROADCAST:
         word = net.lower()
-        return bool(re.search(rf"(^|[\s\d]){word}\b(?!\s+sports)", title))
+        # "FOX Sports 1", "NBC News Now" and "FOX Business" are other channels, not the broadcast network.
+        return bool(re.search(rf"(^|[\s\d]){word}\b(?!\s+(sports|news|business))", title))
     aliases = NETWORK_ALIASES.get(net, (net.lower(),))
     return any(re.search(rf"(^|[^a-z]){re.escape(a)}($|[^a-z])", title) for a in aliases)
 

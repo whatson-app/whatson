@@ -79,3 +79,4 @@ Never rewrite an accepted ADR's reasoning. Fix a typo or add a link, but change 
 | [0025](0025-a-plex-home-user-for-each-tv.md) | A Plex Home user for each TV | Proposed |
 | [0026](0026-how-sports-scores-refresh.md) | Sports scores refresh by polling, on two timers | Proposed |
 | [0027](0027-trakt-back-in-the-interface.md) | Trakt is back in the interface, as an optional section under More | Proposed |
+| [0028](0028-sort-bare-guide-listings.md) | Sort bare guide listings from patterns across the guide | Proposed |
