@@ -141,11 +141,14 @@ dialog input, dialog select { padding: 10px; border-radius: 10px; border: 1px so
   .spin, .spinner:not(#lib-more)::before, .search.busy button::after { animation-duration: 3s; }
   .skel { animation: none; }
 }
-.device { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 10px 0;
-  border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+/* Each TV is its own box, with its buttons on their own line so they never crowd the name. */
+.device { display: grid; gap: 10px; padding: 12px; margin: 0 0 10px; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--bg); }
 .device .d-name { font-weight: 600; }
-.device .d-meta { color: var(--muted); font-size: 13px; }
-.device .d-actions { display: flex; gap: 6px; }
+.device .d-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.device .d-actions { display: flex; gap: 8px; }
+.device .d-actions button { flex: 1 1 0; min-width: 0; padding-left: 8px; padding-right: 8px; }
+.device .d-actions [data-act="remove"] { flex: 0 0 44px; }
 .row { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
 .row input { flex: 1; min-width: 0; }
 .row .hint, .row .back { margin-right: auto; }
@@ -447,3 +450,33 @@ h3 { font-size: 15px; margin: 18px 0 6px; }
 .rm-appline .app-ic { width: 38px; height: 38px; border-radius: 10px; font-size: 12px; }
 .rm-appline .grow { flex: 1; display: grid; }
 .rm-appline input { width: 22px; height: 22px; accent-color: var(--accent); }
+
+/* --- Settings spacing (design review 2026-11-08): room to breathe, most of all on phones ------------------- */
+#settings { width: min(560px, calc(100vw - 32px)); }
+#settings [data-panel] > .hint:first-child { margin-top: 0; }
+.fold { margin: 10px 0; }
+.fold[open] > summary { border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+.fold > :not(summary) + :not(summary) { margin-top: 12px; }
+.checks { gap: 10px 14px; margin: 8px 0 4px; }
+.check { padding: 2px 0; }
+#sp-my-teams { display: grid; gap: 8px; }
+#sp-my-teams .chip { width: 100%; border-radius: 12px; padding: 8px 10px; }
+#sp-my-teams .chip small { margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#sp-my-teams .chip .x { margin-left: 4px; }
+.team-search { margin-top: 14px; }
+#tk-connected { display: grid; gap: 12px; }
+#tk-connected .row:first-child { flex-direction: column; align-items: flex-start; gap: 2px; }
+#tk-connected .row:last-child { justify-content: flex-start; }
+#tk-connected .row .hint { margin-right: 0; }
+.dl-form { gap: 14px; }
+.dl-form .row { flex-wrap: wrap; justify-content: flex-start; }
+.dl-form [data-result] { flex-basis: 100%; margin-right: 0; }
+@media (max-width: 520px) {
+  #settings, .sheet { width: calc(100vw - 16px); padding: 14px 12px; }
+  .fold > :not(summary) { margin-left: 12px; margin-right: 12px; }
+  .fold > .wide { width: calc(100% - 24px); }
+  .fold .card { padding: 12px; }
+  .tabs button { padding: 8px 10px; }
+}
+
+#sp-team-results .badge { white-space: nowrap; flex: none; }
