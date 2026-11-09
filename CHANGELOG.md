@@ -4,6 +4,8 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+## 0.2.3 - 2026-11-08
+
 ### Added
 - **Trakt is back**, in ⚙ → More → Trakt: connect with your own free Trakt app for "Your shows on tonight", "Up next"
   from Trakt, a row of watchlist titles you don't own (with "Get it" when Radarr or Sonarr is connected) and suggestions
