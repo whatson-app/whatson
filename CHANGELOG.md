@@ -4,6 +4,8 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+## 0.2.4 - 2026-11-08
+
 ### Fixed
 - **Movies and Shows views work on bare guides.** Plex calls every listing from an XMLTV guide a movie, so news, reality
   shows and cartoons all showed under Movies and Shows was empty. Listings are now sorted from the guide itself: a title
