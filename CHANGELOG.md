@@ -11,11 +11,20 @@ What changed in each version of WhatsOn, newest first.
 - **A small remote on that card:** back 10 seconds, play/pause, back to live (live TV), volume down, mute and up, and a
   link to the full remote.
 
+### Changed
+- Live TV no longer has a separate "Your shows on tonight" row. With Trakt connected, those shows are still among the
+  candidates for "On now, picked for you".
+- **Settings has more room.** Each TV is its own box with its buttons on one line; your Trakt account and last sync
+  stack instead of squeezing side by side; followed teams are one per row with the league on the right; the Downloads
+  test result sits under its button; opened sections get a divider; and on phones the dialog uses more of the screen.
+
 ### Fixed
 - A game on ESPN no longer also shows on ESPN 2, ESPNU, ESPNews or ESPN8 The Ocho, and a game on FOX no longer shows on
   FOX Weather, LiveNOW from FOX or Fox Soccer Plus.
 - Games ESPN lists on "NFL Net" or "NHL Net" now match NFL Network and NHL Network channels.
 - Tapping the now-playing bar during a movie or episode no longer starts it again on the TV.
+- A game in "On now, picked for you" is named for the game ("Comets at Otters"), not the channel's placeholder listing,
+  on the card and in what the AI ranks.
 
 
 ## 0.2.4 - 2026-11-08

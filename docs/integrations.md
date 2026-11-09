@@ -76,7 +76,7 @@ Trakt if it's connected. See
 ## Trakt
 
 Each self-hoster registers their own free Trakt API app, because a shared secret can't ship in open source, and connects
-in ⚙ → More → Trakt with a device code. It feeds "Your shows on tonight", "Up next", the watchlist row and suggestions. See
+in ⚙ → More → Trakt with a device code. It feeds "On now, picked for you", "Up next", the watchlist row and suggestions. See
 [ADR 0027](adr/0027-trakt-back-in-the-interface.md).
 
 ## Links only

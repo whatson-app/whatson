@@ -117,3 +117,27 @@ def test_one_card_per_game_and_none_for_games_already_over():
     conn.execute("INSERT INTO follows VALUES ('league', 'football/nfl', '', '', '', '')")
     picks = suggest.live_candidates(conn, {}, NOW)
     assert [(p["title"], p["channel"]["title"]) for p in picks] == [("NFL", "Channel A")]
+
+
+def test_a_game_pick_is_named_for_the_game_not_the_channel():
+    conn = db.connect(":memory:")
+    base = dict(league="football/nfl", name="", short_name="", starts=NOW, state="in", detail="2nd",
+                home_score="7", away_score="3", networks=[], terms=[])
+    write_games(conn, [Game(id="1", home="Otters", away="Comets", home_id="9", away_id="3", **base)])
+    write_guide(conn, [Channel("4", "4", "Channel A")], [Airing("4", "Channel A", "", "", "other", NOW - 600, NOW + 6000)], [])
+    conn.execute("UPDATE airings SET game_id = '1'")
+    conn.execute("INSERT INTO follows VALUES ('league', 'football/nfl', '', '', '', '')")
+    [pick] = suggest.live_candidates(conn, {}, NOW)
+    assert pick["game"]["away"] == "Comets" and pick["game"]["home"] == "Otters"
+
+    class Ranker:
+        enabled = True
+        seen = []
+
+        async def rank(self, candidates, want, context=""):
+            Ranker.seen = candidates
+            return []
+
+    suggest._rank_cache.clear()
+    asyncio.run(suggest.ai_rank(Ranker(), "t", [pick], 4))
+    assert Ranker.seen[0]["text"].startswith("Comets at Otters")
