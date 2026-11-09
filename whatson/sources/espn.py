@@ -28,11 +28,14 @@ NETWORK_ALIASES: dict[str, tuple[str, ...]] = {
     "ACC Network": ("acc network", "accn"), "ESPN": ("espn",), "ESPN2": ("espn 2", "espn2"),
     "ESPNU": ("espnu", "espn u"), "ESPNEWS": ("espnews",), "CBSSN": ("cbs sports network", "cbssn"),
     "NFL Network": ("nfl network",), "NBA TV": ("nba tv",), "MLB Network": ("mlb network",),
-    "NHL Network": ("nhl network",), "TNT": ("tnt",), "truTV": ("trutv", "tru tv"),
+    "NHL Network": ("nhl network",), "NFL Net": ("nfl network",), "NHL Net": ("nhl network",),
+    "TNT": ("tnt",), "truTV": ("trutv", "tru tv"),
     "TBS": ("tbs",), "USA Net": ("usa network",), "Big Ten Network": ("big ten network",),
     "Golf": ("golf channel",), "CNBC": ("cnbc",), "The CW": ("cw",), "CW": ("cw",),
 }
 BROADCAST = ("ABC", "CBS", "FOX", "NBC")
+# What can follow "espn" in the name of a different ESPN channel: "ESPN 2", "ESPN8 The Ocho", "ESPN U", "ESPN News".
+ESPN_SISTER = r"(?!\s*(\d|u\b|news|deportes|classic|plus|\+))"
 
 
 @dataclass
@@ -61,10 +64,11 @@ def network_matches(network: str, channel_title: str) -> bool:
     net = network.strip()
     if net.upper() in BROADCAST:
         word = net.lower()
-        # "FOX Sports 1", "NBC News Now" and "FOX Business" are other channels, not the broadcast network.
-        return bool(re.search(rf"(^|[\s\d]){word}\b(?!\s+(sports|news|business))", title))
+        # "FOX Sports 1", "NBC News Now", "FOX Weather" and "LiveNOW from FOX" are other channels, not the network.
+        return bool(re.search(rf"(^|[\s\d])(?<!from ){word}\b(?!\s+(sports|news|business|weather|soccer))", title))
     aliases = NETWORK_ALIASES.get(net, (net.lower(),))
-    return any(re.search(rf"(^|[^a-z]){re.escape(a)}($|[^a-z])", title) for a in aliases)
+    return any(re.search(rf"(^|[^a-z]){re.escape(a)}{ESPN_SISTER if a == 'espn' else ''}($|[^a-z])", title)
+               for a in aliases)
 
 
 def _score(side: dict) -> str:

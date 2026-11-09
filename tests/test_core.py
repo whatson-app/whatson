@@ -25,6 +25,14 @@ def test_network_matching():
     assert not network_matches("FOX", "FOX SPORTS 1")
     assert not network_matches("NBC", "NBC News Now")
     assert not network_matches("FOX", "FOX Business")
+    for other in ("FOX WEATHER", "LiveNOW from FOX", "Fox Soccer Plus"):
+        assert not network_matches("Fox", other), other
+    assert network_matches("Fox", "FOX 32 KDEM Lakemont")
+    for sister in ("ESPN 2", "ESPN U", "ESPN8 The Ocho", "ESPN NEWS", "ESPN Deportes"):
+        assert not network_matches("ESPN", sister), sister
+    assert network_matches("ESPN", "ESPN") and network_matches("ESPN", "206 ESPN HD")
+    assert network_matches("ESPN2", "ESPN 2") and network_matches("ESPNU", "ESPN U")
+    assert network_matches("NFL Net", "NFL NETWORK") and network_matches("NHL Net", "NHL Network")
     assert network_matches("NBC", "NBC 5 KDEM Lakemont")
     assert network_matches("FOX", "FOX 32 KDEM Lakemont")
     assert network_matches("FOX", "8 FOX 32 KDEM Lakemont")
