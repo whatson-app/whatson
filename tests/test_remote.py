@@ -147,3 +147,22 @@ def test_saved_jellyfin_key_only_goes_to_the_address_it_was_saved_with(monkeypat
     assert remote_routes._key_for("http://jf.lan:8096", "") == "s3cret"
     assert remote_routes._key_for("http://elsewhere.lan:8096", "") == ""
     assert remote_routes._key_for("http://elsewhere.lan:8096", " typed ") == "typed"
+
+
+def _remote_js() -> str:
+    from pathlib import Path
+    return (Path(__file__).resolve().parent.parent / "whatson" / "static" / "js" / "remote.js").read_text(encoding="utf-8")
+
+
+def test_a_redraw_ends_a_held_key():
+    """A redraw replaces the held button, so its pointerup never comes; without this the key repeated forever."""
+    js = _remote_js()
+    draw = js[js.index("function draw()"):]
+    assert draw[:200].count("endHold();") == 1
+    assert "endHold();" in js[js.index("export function stopRemote()"):js.index("export async function renderRemote")]
+
+
+def test_a_held_key_has_a_hard_limit():
+    js = _remote_js()
+    assert "REPEAT_MAX" in js and "++n > REPEAT_MAX" in js and "!b.isConnected" in js
+    assert "setPointerCapture" in js and "document.hidden" in js

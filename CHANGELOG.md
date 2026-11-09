@@ -25,6 +25,9 @@ What changed in each version of WhatsOn, newest first.
 - Tapping the now-playing bar during a movie or episode no longer starts it again on the TV.
 - A game in "On now, picked for you" is named for the game ("Comets at Otters"), not the channel's placeholder listing,
   on the card and in what the AI ranks.
+- **A held Remote key can't get stuck repeating.** If the Remote screen refreshed while a key was held, the key kept
+  repeating after you let go, until the page was closed. Volume Down could run for minutes and turn a soundbar all the
+  way down. A refresh, switching tabs or leaving the window now ends the hold, and a hold stops after about 8 seconds.
 
 
 ## 0.2.4 - 2026-11-08
