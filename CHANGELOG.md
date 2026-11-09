@@ -4,6 +4,11 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Fixed
+- A game on ESPN no longer also shows on ESPN 2, ESPNU, ESPNews or ESPN8 The Ocho, and a game on FOX no longer shows on
+  FOX Weather, LiveNOW from FOX or Fox Soccer Plus.
+- Games ESPN lists on "NFL Net" or "NHL Net" now match NFL Network and NHL Network channels.
+
 ## 0.2.4 - 2026-11-08
 
 ### Fixed
