@@ -187,9 +187,15 @@ async def _stop_key(device_id: int, d: dict) -> str:
     return "MEDIA_STOP" if (await now_playing(device_id))["state"] == "app" else "BACK"
 
 
+# The now-playing bar and card. In Plezy, MEDIA_REWIND skips back by its small seek time (10 s unless changed), or a
+# chapter when the item has chapters.
+NOW_KEYS = {"play_pause": "MEDIA_PLAY_PAUSE", "stop": "MEDIA_STOP", "back": "BACK", "home": "HOME",
+            "rewind": "MEDIA_REWIND", "volume_up": "VOLUME_UP", "volume_down": "VOLUME_DOWN", "volume_mute": "VOLUME_MUTE"}
+
+
 @router.post("/devices/{device_id}/key")
 async def press_key(device_id: int, body: KeyIn):
-    keys = {"play_pause": "MEDIA_PLAY_PAUSE", "stop": "MEDIA_STOP", "back": "BACK", "home": "HOME"}
+    keys = NOW_KEYS
     if body.key not in keys:
         raise HTTPException(400, f"Keys: {', '.join(keys)}")
     d = _device(device_id)

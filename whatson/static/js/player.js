@@ -1,7 +1,7 @@
 // The selected TV: picker, tuning, and the now-playing bar with pause/stop. Tapping the bar opens a card about
 // what's on: the listing, or for a game the live score, a catch-up and the latest plays from ESPN.
 
-import { $, ai, aiPlaceholder, api, confirmDialog, esc, fmtMins, openSheet, store, thumbUrl, toast, working } from "./core.js";
+import { $, ai, aiPlaceholder, api, confirmDialog, esc, fmtMins, openSheet, closeSheet, store, thumbUrl, toast, working } from "./core.js";
 
 export let devices = [];
 let onNeedPair = () => {};
@@ -138,7 +138,28 @@ export function initPlayer() {
 
 const ESPN_CREDIT = '<p class="credit">Scores and plays from <a href="https://www.espn.com" target="_blank" rel="noopener">ESPN</a></p>';
 
+// A small remote under the card: back 10 s, play/pause, back to live (live TV), volume, and the full remote.
+function miniRemote(n) {
+  const paused = n.state === "paused";
+  return `
+    <div class="mini-remote" aria-label="Remote">
+      <button class="icon-btn" data-card-key="rewind" aria-label="Back 10 seconds" title="Back 10 seconds">↺10</button>
+      <button class="icon-btn" data-card-key="play_pause" aria-label="${paused ? "Play" : "Pause"}">${paused ? "▶" : "⏸"}</button>
+      ${n.kind === "live" && n.channel ? `<button class="chip" data-card-live="${esc(n.channel.vcn)}">Back to live</button>` : ""}
+      <span class="vol" role="group" aria-label="Volume">
+        <button class="icon-btn" data-card-key="volume_down" aria-label="Volume down">−</button>
+        <button class="icon-btn" data-card-key="volume_mute" aria-label="Mute">🔇</button>
+        <button class="icon-btn" data-card-key="volume_up" aria-label="Volume up">+</button>
+      </span>
+    </div>
+    <a class="link-btn full-remote" href="#/remote" data-close-sheet>Full remote →</a>`;
+}
+
 function nowCardHtml(n) {
+  return nowCardBody(n) + miniRemote(n) + (n.game ? ESPN_CREDIT : "");
+}
+
+function nowCardBody(n) {
   const g = n.game;
   const pct = n.duration ? Math.min(100, Math.round((n.offset / n.duration) * 100)) : 0;
   const progress = pct ? `<div class="now-bar card-bar"><div style="width:${pct}%"></div></div>` : "";
@@ -154,8 +175,7 @@ function nowCardHtml(n) {
         <button class="chip" data-now-plays="${esc(g.id)}">Latest plays</button>
         ${g.espn_url ? `<a class="chip" href="${esc(g.espn_url)}" target="_blank" rel="noopener">Game on ESPN ↗</a>` : ""}
       </div>
-      <div class="recap" id="now-recap" hidden></div>
-      ${ESPN_CREDIT}`;
+      <div class="recap" id="now-recap" hidden></div>`;
   }
   if (n.kind === "live") {
     return `
@@ -196,8 +216,31 @@ async function fillFromEspn(gameId, plays) {
   }
 }
 
+async function cardKey(btn) {
+  btn.disabled = true;
+  try { await api(`/api/devices/${selectedId()}/key`, { method: "POST", body: { key: btn.dataset.cardKey } }); }
+  catch (e) { toast(e.message); }
+  btn.disabled = false;
+  if (btn.dataset.cardKey === "play_pause") setTimeout(refreshNow, 1500);
+}
+
+// Plezy has no key for "jump to live", but WhatsOn's live links start at the live edge, so tune the same channel
+// again. It's what this TV is already showing, so there's no takeover to ask about.
+async function backToLive(btn) {
+  btn.disabled = true;
+  try {
+    await api("/api/tune", { method: "POST", body: { device_id: selectedId(), channel: btn.dataset.cardLive, force: true } });
+    toast("Back to live…");
+    setTimeout(refreshNow, 6000);
+  } catch (e) { toast(e.message); }
+  btn.disabled = false;
+}
+
 function openNowCard(n) {
   const body = openSheet(nowCardHtml(n));
+  body.querySelectorAll("[data-card-key]").forEach((b) => b.addEventListener("click", () => cardKey(b)));
+  body.querySelector("[data-card-live]")?.addEventListener("click", (ev) => backToLive(ev.currentTarget));
+  body.querySelector("[data-close-sheet]")?.addEventListener("click", () => closeSheet());
   body.querySelector("[data-now-recap]")?.addEventListener("click", (ev) => fillFromEspn(ev.currentTarget.dataset.nowRecap, false));
   body.querySelector("[data-now-plays]")?.addEventListener("click", (ev) => fillFromEspn(ev.currentTarget.dataset.nowPlays, true));
 }

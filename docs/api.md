@@ -87,7 +87,7 @@ serves generated schemas at `/docs` and `/openapi.json`.
 | `POST /api/devices/{device_id}/test` | Open Plezy and confirm it came to the front. Checks whether the TV is busy first |
 | `GET /api/devices/{device_id}/status` | Whether the TV is reachable, on and busy |
 | `GET /api/devices/{device_id}/now` | What the TV is showing; for live TV also the listing and any game, with its ESPN link. Cached for 8 seconds |
-| `POST /api/devices/{device_id}/key` | Now-playing bar's play/pause, stop, back and home |
+| `POST /api/devices/{device_id}/key` | The now-playing bar and card: play/pause, stop, back, home, rewind (Plezy skips back 10 s), volume up, down and mute |
 | `PUT /api/devices/{device_id}/jellyfin` | Link a TV to the Plezy device Jellyfin reports |
 | `PUT /api/devices/{device_id}/plex-user` | Choose which Plex Home user watches on a TV, or nobody |
 | `POST /api/tune` | Tune a channel or play a title. Checks whether the TV is busy unless `force` is set |

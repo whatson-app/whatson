@@ -177,6 +177,12 @@ a { color: var(--accent); }
 .now-poster { width: 96px; border-radius: 10px; background: var(--surface-2); }
 .credit { color: var(--muted); font-size: 12px; margin: 14px 0 0; }
 a.chip { border: 1px solid var(--border); background: var(--surface-2); color: var(--text); text-decoration: none; }
+.mini-remote { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--border); }
+.mini-remote .icon-btn { min-width: 44px; min-height: 44px; font-size: 18px; border: 1px solid var(--border);
+  background: var(--surface-2); border-radius: 12px; }
+.mini-remote .vol { display: inline-flex; gap: 4px; margin-left: auto; }
+.full-remote { display: inline-block; margin-top: 12px; text-decoration: none; }
 @media (max-width: 700px) {
   .top { flex-wrap: wrap; }
   .now { order: 3; flex-basis: 100%; }

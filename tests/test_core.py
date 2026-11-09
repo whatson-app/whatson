@@ -290,3 +290,10 @@ def test_tapping_the_now_bar_never_plays_anything():
     # The page treats any element with data-rating-key as a Play button, so the bar must not carry one.
     player = (Path(__file__).resolve().parent.parent / "whatson" / "static" / "js" / "player.js").read_text(encoding="utf-8")
     assert "bar.dataset.ratingKey" not in player and "openNowCard" in player
+
+
+def test_now_card_keys_are_real_android_keys():
+    from whatson.remote_routes import KEYS
+    from whatson.routes import NOW_KEYS
+    assert {"rewind", "volume_up", "volume_down", "volume_mute", "play_pause"} <= set(NOW_KEYS)
+    assert set(NOW_KEYS.values()) <= KEYS

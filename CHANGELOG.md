@@ -8,6 +8,8 @@ What changed in each version of WhatsOn, newest first.
 - **Tap the now-playing bar for a card about what's on.** For a game: the live score, "Catch me up", the latest plays
   and a link to the game on ESPN, credited to ESPN. For other live TV: the listing's time, channel and description. For
   a movie or episode: poster, time left and a link to its page.
+- **A small remote on that card:** back 10 seconds, play/pause, back to live (live TV), volume down, mute and up, and a
+  link to the full remote.
 
 ### Fixed
 - A game on ESPN no longer also shows on ESPN 2, ESPNU, ESPNews or ESPN8 The Ocho, and a game on FOX no longer shows on
