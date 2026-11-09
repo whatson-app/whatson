@@ -12,8 +12,15 @@ let busy = false;
 
 const REPEAT_AFTER = 400;
 const REPEAT_EVERY = 140;
+const REPEAT_MAX = 60;  // ~8 s of holding; a lost release must never repeat forever
+
+// The key repeat in progress, if any. Redraws and leaving the tab end it: a redraw replaces
+// the button, so its pointerup would never arrive and the repeat would run on (2026-11-08:
+// Volume Down kept firing ~6/s and pinned the soundbar at 0).
+let endHold = () => {};
 
 export function stopRemote() {
+  endHold();
   clearTimeout(timer);
   timer = null;
   view = null;
@@ -85,6 +92,7 @@ function appIcon(a) {
 }
 
 function draw() {
+  endHold();
   const r = view.querySelector(".remote") || view.appendChild(Object.assign(document.createElement("div"), { className: "remote" }));
   if (!st.reachable || !st.paired) {
     r.innerHTML = `<p class="msg err">${esc(st.error || "Can't reach the TV.")}</p>
@@ -173,15 +181,19 @@ function wire(r) {
       navigator.vibrate?.(8);
       send(b.dataset.rkey).catch(() => stop());
       if (!b.classList.contains("hold")) return;
+      endHold();
+      try { b.setPointerCapture(ev.pointerId); } catch { /* pointer already gone */ }
       held = true;
+      endHold = stop;
+      let n = 0;
       const again = async () => {
-        if (!held) return;
+        if (!held || !b.isConnected || document.hidden || ++n > REPEAT_MAX) return stop();
         try { await send(b.dataset.rkey); } catch { return stop(); }
         if (held) hold = setTimeout(again, REPEAT_EVERY);
       };
       hold = setTimeout(again, REPEAT_AFTER);
     });
-    ["pointerup", "pointerleave", "pointercancel"].forEach((e) => b.addEventListener(e, stop));
+    ["pointerup", "pointerleave", "pointercancel", "lostpointercapture"].forEach((e) => b.addEventListener(e, stop));
     // Pointer presses are handled above; a click with detail 0 is the keyboard (Enter/Space).
     b.addEventListener("click", (ev) => { ev.preventDefault(); if (ev.detail === 0) send(b.dataset.rkey).catch(() => {}); });
     if (/^VOLUME|MEDIA_PLAY|MEDIA_STOP|POWER/.test(b.dataset.rkey)) b.addEventListener("pointerup", () => setTimeout(soon, 600));
@@ -264,5 +276,6 @@ function editApps() {
   body.querySelector("#rm-apps-done").addEventListener("click", () => { closeSheet(); if (view) draw(); });
 }
 
-document.addEventListener("visibilitychange", () => { if (view && !document.hidden) load(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) endHold(); else if (view) load(); });
+window.addEventListener("blur", () => endHold());
 $("#tv").addEventListener("change", () => { if (view) { control = "tv"; load(); } });
