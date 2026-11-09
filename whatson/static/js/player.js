@@ -236,8 +236,24 @@ async function backToLive(btn) {
   btn.disabled = false;
 }
 
+// The card's remote presses must not open a new connection to the TV: a fresh remote connection can stall the picture
+// for a moment in Plezy during live TV. The Remote tab avoids that by polling the TV; the card does the same while it's
+// open, so the server keeps its connection (held for 2 minutes after each use) warm.
+let warmTimer = null;
+function keepTvWarm() {
+  const sheet = $("#sheet");
+  const ping = () => {
+    if (!sheet.open) { clearInterval(warmTimer); warmTimer = null; return; }
+    api(`/api/remote/${selectedId()}`).catch(() => {});
+  };
+  clearInterval(warmTimer);
+  ping();
+  warmTimer = setInterval(ping, 30000);
+}
+
 function openNowCard(n) {
   const body = openSheet(nowCardHtml(n));
+  if (selectedId()) keepTvWarm();
   body.querySelectorAll("[data-card-key]").forEach((b) => b.addEventListener("click", () => cardKey(b)));
   body.querySelector("[data-card-live]")?.addEventListener("click", (ev) => backToLive(ev.currentTarget));
   body.querySelector("[data-close-sheet]")?.addEventListener("click", () => closeSheet());

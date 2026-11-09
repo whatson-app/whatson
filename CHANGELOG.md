@@ -4,6 +4,11 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Fixed
+- **The now-playing card's remote no longer stalls the TV picture.** The first press after two quiet minutes had to
+  open a new connection to the TV, which could freeze live video in Plezy for a moment. The card now opens that
+  connection as soon as it appears and keeps it open while it's showing, as the Remote tab does.
+
 ## 0.2.5 - 2026-11-08
 
 ### Added
