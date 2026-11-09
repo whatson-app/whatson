@@ -4,6 +4,8 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+## 0.2.5 - 2026-11-08
+
 ### Added
 - **Tap the now-playing bar for a card about what's on.** For a game: the live score, "Catch me up", the latest plays
   and a link to the game on ESPN, credited to ESPN. For other live TV: the listing's time, channel and description. For
@@ -28,7 +30,6 @@ What changed in each version of WhatsOn, newest first.
 - **A held Remote key can't get stuck repeating.** If the Remote screen refreshed while a key was held, the key kept
   repeating after you let go, until the page was closed. Volume Down could run for minutes and turn a soundbar all the
   way down. A refresh, switching tabs or leaving the window now ends the hold, and a hold stops after about 8 seconds.
-
 
 ## 0.2.4 - 2026-11-08
 
