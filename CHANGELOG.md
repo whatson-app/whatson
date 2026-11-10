@@ -4,6 +4,8 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+## 0.2.7 - 2026-11-10
+
 ### Changed
 - **Search shows what you typed, then what the AI made of it.** With AI on, matches for your words exactly as typed now
   come first, under "Matches for", and the AI's reading follows under "More from the AI's reading". Before, only the AI's

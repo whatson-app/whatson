@@ -1,6 +1,6 @@
 [project]
 name = "whatson"
-version = "0.2.6"
+version = "0.2.7"
 description = "Self-hosted search for what's on Live TV and in your Plex library, with one-tap tuning on your TVs."
 readme = "README.md"
 requires-python = ">=3.11"
