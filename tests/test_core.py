@@ -304,3 +304,71 @@ def test_now_card_keeps_the_tv_connection_warm():
     player = (Path(__file__).resolve().parent.parent / "whatson" / "static" / "js" / "player.js").read_text(encoding="utf-8")
     assert "keepTvWarm()" in player and "/api/remote/${selectedId()}" in player
 
+
+
+class TeamHappyAI:
+    """Reads a nickname-like word as a team, as a model told to expand team nicknames can."""
+    enabled = True
+
+    def __init__(self):
+        self.matches: list[str] = []
+
+    async def interpret(self, q, raise_errors=False):
+        return search.Filters(text="harbor city herons", kinds=["sports"]), "Read as a Herons game."
+
+    async def answer(self, q, matches):
+        self.matches = matches
+        return "ok"
+
+
+def episode_db():
+    conn = make_db()
+    write_guide(conn, [Channel("706", "706", "FOX SPORTS 1"), Channel("42", "42", "PBS KIDS")],
+                [Airing("706", "Live: College Football", "", "From Lakemont", "sports", NOW - 4000, NOW + 3000),
+                 Airing("42", "Critter Crew", "Herons, Herons, Grebe", "The crew follows a grebe.", "episode",
+                        NOW + 600, NOW + 2400)], [game()])
+    return conn
+
+
+def test_with_ai_the_words_as_typed_still_come_first(monkeypatch):
+    import asyncio
+
+    from whatson import app as app_mod
+    monkeypatch.setattr(app_mod.state, "conn", episode_db(), raising=False)
+    monkeypatch.setattr(app_mod.state, "interpreter", TeamHappyAI(), raising=False)
+
+    res = asyncio.run(app_mod.do_search(q="herons herons grebe"))
+    assert res["ai"] and res["typed"]["text"] == "herons herons grebe"
+    assert [a["subtitle"] for a in res["typed"]["guide"]] == ["Herons, Herons, Grebe"]
+    # The AI's reading still shows, without repeating what the typed words found.
+    assert res["games"] and all(a["subtitle"] != "Herons, Herons, Grebe" for a in res["guide"])
+
+    # Removing a chip from the AI's reading keeps the typed matches.
+    replay = asyncio.run(app_mod.do_search(q="herons herons grebe", filters='{"text": "harbor city herons"}'))
+    assert [a["subtitle"] for a in replay["typed"]["guide"]] == ["Herons, Herons, Grebe"]
+
+
+def test_typed_matches_are_not_repeated_or_added_without_ai(monkeypatch):
+    import asyncio
+
+    from whatson import app as app_mod
+    from whatson.ai import Interpreter
+    monkeypatch.setattr(app_mod.state, "conn", episode_db(), raising=False)
+    monkeypatch.setattr(app_mod.state, "interpreter", Interpreter("none"), raising=False)
+    res = asyncio.run(app_mod.do_search(q="herons herons grebe"))
+    assert res["typed"] is None and [a["subtitle"] for a in res["guide"]] == ["Herons, Herons, Grebe"]
+
+    # A reading that finds the same things as the typed words leaves nothing extra in the AI's part.
+    out = search.run(make_db(), search.Filters(text="halloween"))
+    typed = search.split_typed(search.run(make_db(), search.basic_filters("halloween")), out)
+    assert typed["library"] and out == {"games": [], "guide": [], "library": []}
+    assert search.split_typed({"games": [], "guide": [], "library": []}, out) is None
+
+
+def test_the_ai_answer_sees_the_typed_matches_first(monkeypatch):
+    import asyncio
+    ai = TeamHappyAI()
+    monkeypatch.setattr(routes.state, "conn", episode_db(), raising=False)
+    monkeypatch.setattr(routes.state, "interpreter", ai, raising=False)
+    asyncio.run(routes.answer(q="herons herons grebe", filters='{"text": "harbor city herons", "kinds": ["sports"]}'))
+    assert "Herons, Herons, Grebe" in ai.matches[0] and any(m.startswith("Game:") for m in ai.matches[1:])

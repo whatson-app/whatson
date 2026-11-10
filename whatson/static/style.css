@@ -83,6 +83,7 @@ h2 small { text-transform: none; letter-spacing: 0; font-weight: 400; }
 .elsewhere summary { color: var(--muted); cursor: pointer; padding: 8px 2px; }
 .elsewhere .cards { margin-top: 6px; }
 .empty { color: var(--muted); text-align: center; margin: 40px 0; }
+.group-head { font-size: 17px; font-weight: 600; color: var(--text); margin: 24px 2px 0; overflow-wrap: anywhere; }
 
 dialog { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text);
   width: min(520px, calc(100vw - 32px)); padding: 16px; }

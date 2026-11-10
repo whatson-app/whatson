@@ -28,3 +28,8 @@ def test_a_slow_search_cannot_overwrite_a_newer_one():
 
 def test_motion_respects_the_reduced_motion_setting():
     assert "prefers-reduced-motion: reduce" in CSS
+
+
+def test_removing_an_ai_chip_keeps_the_typed_matches():
+    text = (JS / "search.js").read_text(encoding="utf-8")
+    assert "wasAi ? `&q=" in text and "res.typed" in (JS / "results.js").read_text(encoding="utf-8")

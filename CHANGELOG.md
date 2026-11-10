@@ -4,6 +4,12 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Changed
+- **Search shows what you typed, then what the AI made of it.** With AI on, matches for your words exactly as typed now
+  come first, under "Matches for", and the AI's reading follows under "More from the AI's reading". Before, only the AI's
+  reading was searched, so a search for an episode like "Duck Duck Loon" could turn into a search for an Oregon Ducks game
+  and never show the episode.
+
 ## 0.2.6 - 2026-11-08
 
 ### Fixed
