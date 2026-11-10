@@ -1,6 +1,6 @@
 # 0029. Show matches for the words as typed beside the AI's reading
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-10
 
 ## Context
