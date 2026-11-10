@@ -12,9 +12,10 @@ from typing import Any
 
 import httpx
 
-from .base import Airing, Channel, LibraryItem, Session, classify
+from .base import Airing, Channel, Episode, LibraryItem, Session, classify
 
 PAGE = 2000
+EPISODE_TRIM = "excludeFields=summary,thumb,art&excludeElements=Media,Image,UltraBlurColors,Guid"
 # Only exact Plex artwork paths, so /api/thumb can't be used to reach anything else on the server.
 THUMB_RE = re.compile(r"/library/metadata/\d+/(thumb|art)/\d+")
 
@@ -22,6 +23,13 @@ THUMB_RE = re.compile(r"/library/metadata/\d+/(thumb|art)/\d+")
 def _list(container: dict[str, Any], key: str) -> list[dict[str, Any]]:
     value = container.get(key) or []
     return value if isinstance(value, list) else [value]
+
+
+def _int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 class PlexNotConnected(Exception):
@@ -168,6 +176,28 @@ class PlexClient:
                         watched=bool(m.get("viewCount")) if sec["type"] == "movie" else (leaves > 0 and viewed >= leaves),
                         leaf_count=leaves, viewed_leaf_count=viewed,
                         guids=[g["id"].replace("://", ":") for g in _list(m, "Guid") if g.get("id")]))
+                offset += len(items)
+                if not items or offset >= int(mc.get("totalSize") or mc.get("size") or 0):
+                    break
+        return out
+
+    async def library_episodes(self) -> list[Episode]:
+        out: list[Episode] = []
+        for sec in _list(await self._get("/library/sections"), "Directory"):
+            if sec.get("type") != "show":
+                continue
+            offset = 0
+            while True:
+                # type=4 is episodes. Leave out what search doesn't use, which roughly halves each page.
+                mc = await self._get(f"/library/sections/{sec['key']}/all?type=4&{EPISODE_TRIM}", headers={
+                    "X-Plex-Container-Start": str(offset), "X-Plex-Container-Size": str(PAGE)})
+                items = _list(mc, "Metadata")
+                for m in items:
+                    if m.get("ratingKey") and m.get("grandparentRatingKey") and m.get("title"):
+                        out.append(Episode(
+                            rating_key=str(m["ratingKey"]), show_key=str(m["grandparentRatingKey"]),
+                            show_title=m.get("grandparentTitle", "") or "", season=_int(m.get("parentIndex")),
+                            index=_int(m.get("index")), title=m["title"]))
                 offset += len(items)
                 if not items or offset >= int(mc.get("totalSize") or mc.get("size") or 0):
                     break

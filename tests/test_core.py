@@ -361,8 +361,8 @@ def test_typed_matches_are_not_repeated_or_added_without_ai(monkeypatch):
     # A reading that finds the same things as the typed words leaves nothing extra in the AI's part.
     out = search.run(make_db(), search.Filters(text="halloween"))
     typed = search.split_typed(search.run(make_db(), search.basic_filters("halloween")), out)
-    assert typed["library"] and out == {"games": [], "guide": [], "library": []}
-    assert search.split_typed({"games": [], "guide": [], "library": []}, out) is None
+    assert typed["library"] and out == {"games": [], "guide": [], "library": [], "episodes": []}
+    assert search.split_typed({"games": [], "guide": [], "library": [], "episodes": []}, out) is None
 
 
 def test_the_ai_answer_sees_the_typed_matches_first(monkeypatch):

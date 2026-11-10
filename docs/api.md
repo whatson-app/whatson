@@ -36,7 +36,7 @@ serves generated schemas at `/docs` and `/openapi.json`.
 
 | Route | What it does |
 |---|---|
-| `GET /api/search` | Search. `q`, `scope`, `ai`, `on_now`, `kind`, or `filters` to replay edited chips. `device` shows watched status for that TV's Plex user. After an AI reading, `typed` holds the matches for the words as typed, or `null` |
+| `GET /api/search` | Search. `q`, `scope`, `ai`, `on_now`, `kind`, or `filters` to replay edited chips. `device` shows watched status for that TV's Plex user. `episodes` holds library episodes whose title has every word. After an AI reading, `typed` holds the matches for the words as typed, or `null` |
 | `GET /api/answer` | One line answering `q` from the matches only. Empty when AI is off |
 | `GET /api/suggest/live` | Picks for Live TV (`your_shows` is still returned; the page no longer shows it as a row) |
 | `GET /api/suggest/library` | Up next, picks, and watchlist titles you don't have. `device` reads as that TV's Plex user |

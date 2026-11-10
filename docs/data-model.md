@@ -16,6 +16,8 @@ Safe to lose: the next refresh fills them again. Switching server clears all of 
 | `airings_fts` | Search index over airings. `extra` holds the linked game's team names, which is how a team finds its channel |
 | `library` | Movies and shows. `rating_key` is the server's item id, whichever server that is |
 | `library_fts` | Search index over the library |
+| `episodes` | Every library episode's title, season and number. `show_key` is its show's `rating_key` ([ADR 0030](adr/0030-search-episode-titles.md)) |
+| `episodes_fts` | Search index over episode titles |
 | `games` | Games from ESPN, with teams, scores and networks. `state` is pre, in or post |
 | `user_watched` | Watched status for Plex Home users other than the owner, refreshed as often as the library |
 

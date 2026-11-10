@@ -4,6 +4,11 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Added
+- **Search finds episodes by their name.** Type an episode's title, like "Duck Duck Loon", and it shows in a new
+  Episodes row with its show and number, ready to play or open the show. Before, only movie and show names were
+  searched. A library refresh now also reads every episode's title, so on a big library it takes a little longer.
+
 ## 0.2.7 - 2026-11-10
 
 ### Changed

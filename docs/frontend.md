@@ -15,7 +15,7 @@ Plain JavaScript modules in `whatson/static/`, with no framework and no build st
 | `whatson/static/js/core.js` | Shared helpers: `$`, `esc()`, `api()`, `store`, toasts, dialogs, formatting, placeholders |
 | `whatson/static/js/cards.js` | Card renderers shared by the sections |
 | `whatson/static/js/search.js` | The search box, filter chips and AI answer |
-| `whatson/static/js/results.js` | The search results page: matches for the words as typed first, then the AI's reading |
+| `whatson/static/js/results.js` | The search results page: matches for the words as typed first, then the AI's reading. Episodes get their own row |
 | `whatson/static/js/player.js` | The TV picker, tuning, the now-playing bar, and the card it opens (listing, or a game's score and ESPN plays) |
 | `whatson/static/js/live.js` | Live TV: suggestion rows, guide grid or now/next list, favorites |
 | `whatson/static/js/library.js` | Library: poster grids, show pages, up next |

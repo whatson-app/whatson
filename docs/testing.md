@@ -17,6 +17,7 @@ scripts when Node.js is installed. CI also runs gitleaks over the whole history,
 | `tests/test_guards.py` | The rules in `AGENTS.md` that a test can check. See [ADR 0021](adr/0021-rules-enforced-by-guard-tests.md) |
 | `tests/test_docs.py` | ADR format and index, links and paths, and that the reference docs cover the code |
 | `tests/test_core.py` | Linking games to listings, and search |
+| `tests/test_episodes.py` | Finding library episodes by their own titles |
 | `tests/test_sources.py` | Plex and Jellyfin clients, and switching server |
 | `tests/test_remote.py` | Remote tab, TV driver and app lists. The model for faking a TV |
 | `tests/test_arr.py` | Radarr and Sonarr |

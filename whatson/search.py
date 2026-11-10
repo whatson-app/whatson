@@ -286,6 +286,50 @@ def search_library(conn: sqlite3.Connection, f: Filters) -> list[dict]:
     return [library_item(r) for r in rows]
 
 
+EPISODE_LIMIT = 20  # a one-word search can match hundreds of episode titles
+
+
+def search_episodes(conn: sqlite3.Connection, f: Filters) -> list[dict]:
+    """Episodes whose own title has every search word, so "duck duck loon" finds that episode of a show whose
+    name shares none of those words (ADR 0030). Only for text searches; the show's genres, rating and year
+    stand in for the episode's."""
+    q = fts_query(f.text)
+    if not q or (f.kinds and not {"show", "episode"} & set(f.kinds)):
+        return []
+    where, args = ["episodes_fts MATCH ?"], [q]
+    for g in f.genres:
+        where.append("l.genres LIKE ?")
+        args.append(f"%{g}%")
+    if f.year_from:
+        where.append("l.year >= ?")
+        args.append(f.year_from)
+    if f.year_to:
+        where.append("l.year <= ?")
+        args.append(f.year_to)
+    if f.audience in ("kids", "family"):
+        allowed = KIDS_RATINGS if f.audience == "kids" else FAMILY_RATINGS
+        where.append(f"l.content_rating IN ({','.join('?' * len(allowed))})")
+        args += list(allowed)
+    rows = conn.execute(
+        "SELECT e.*, l.title AS l_title, l.thumb AS l_thumb, l.year AS l_year FROM episodes_fts "
+        "JOIN episodes e ON e.rowid = episodes_fts.rowid JOIN library l ON l.rating_key = e.show_key WHERE "
+        + " AND ".join(where) + " ORDER BY bm25(episodes_fts), e.show_title, e.season, e.idx LIMIT ?",
+        args + [min(f.limit, EPISODE_LIMIT)]).fetchall()
+    return [episode_item(r) for r in rows]
+
+
+def episode_label(season: int | None, index: int | None, title: str) -> str:
+    """"S07E15 Duck, Duck, Loon!", or just the title when the numbers are missing."""
+    return (f"S{season:02d}E{index:02d} " if season is not None and index is not None else "") + title
+
+
+def episode_item(r: sqlite3.Row) -> dict:
+    return {"type": "episode", "rating_key": r["rating_key"], "show_key": r["show_key"],
+            "show_title": r["l_title"] or r["show_title"], "season": r["season"], "index": r["idx"],
+            "title": r["title"], "label": episode_label(r["season"], r["idx"], r["title"]),
+            "thumb": r["l_thumb"], "year": r["l_year"]}
+
+
 def library_item(r: sqlite3.Row) -> dict:
     return {"type": "library", "rating_key": r["rating_key"], "kind": r["kind"], "title": r["title"],
             "year": r["year"], "summary": r["summary"], "genres": r["genres"], "thumb": r["thumb"],
@@ -342,14 +386,16 @@ def _guide_key(a: dict) -> tuple:
 def split_typed(typed: dict, res: dict) -> dict | None:
     """Matches for the words as typed come first, so an AI misreading can't hide them (ADR 0029). Takes anything
     they found out of `res`, the AI's reading, and returns them, or None when the typed words found nothing."""
-    if not (typed["games"] or typed["guide"] or typed["library"]):
+    if not (typed["games"] or typed["guide"] or typed["library"] or typed["episodes"]):
         return None
     games = {g["id"] for g in typed["games"]}
     guide = {_guide_key(a) for a in typed["guide"]}
     library = {li["rating_key"] for li in typed["library"]}
+    episodes = {e["rating_key"] for e in typed["episodes"]}
     res["games"] = [g for g in res["games"] if g["id"] not in games]
     res["guide"] = [a for a in res["guide"] if _guide_key(a) not in guide]
     res["library"] = [li for li in res["library"] if li["rating_key"] not in library]
+    res["episodes"] = [e for e in res["episodes"] if e["rating_key"] not in episodes]
     return typed
 
 
@@ -357,4 +403,5 @@ def run(conn: sqlite3.Connection, f: Filters) -> dict:
     guide = search_guide(conn, f) if f.scope in ("all", "guide") else []
     library = search_library(conn, f) if f.scope in ("all", "library") and not f.on_now else []
     games = search_games(conn, f) if f.scope in ("all", "guide") else []
-    return {"games": games, "guide": guide, "library": library}
+    episodes = search_episodes(conn, f) if f.scope in ("all", "library") and not f.on_now else []
+    return {"games": games, "guide": guide, "library": library, "episodes": episodes}

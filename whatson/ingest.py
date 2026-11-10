@@ -14,7 +14,7 @@ import time
 from . import db
 from .config import Settings
 from .sources import espn
-from .sources.base import Airing, Channel, LibraryItem, Source
+from .sources.base import Airing, Channel, Episode, LibraryItem, Source
 
 log = logging.getLogger(__name__)
 GAME_SLOT_MIN_VCN = 1000  # Dispatcharr-style per-event channels; ranked after real networks
@@ -174,6 +174,23 @@ def write_library(conn: sqlite3.Connection, items: list[LibraryItem]) -> None:
         raise
 
 
+def write_episodes(conn: sqlite3.Connection, episodes: list[Episode]) -> None:
+    conn.execute("BEGIN")
+    try:
+        conn.execute("DELETE FROM episodes")
+        conn.execute("DELETE FROM episodes_fts")
+        for e in episodes:
+            cur = conn.execute(
+                "INSERT OR IGNORE INTO episodes (rating_key, show_key, show_title, season, idx, title) "
+                "VALUES (?, ?, ?, ?, ?, ?)", (e.rating_key, e.show_key, e.show_title, e.season, e.index, e.title))
+            if cur.rowcount:
+                conn.execute("INSERT INTO episodes_fts (rowid, title) VALUES (?, ?)", (cur.lastrowid, e.title))
+        conn.execute("COMMIT")
+    except Exception:
+        conn.execute("ROLLBACK")
+        raise
+
+
 class Refresher:
     def __init__(self, settings: Settings, conn: sqlite3.Connection, source: Source):
         self.s, self.conn, self.source = settings, conn, source
@@ -208,6 +225,16 @@ class Refresher:
         write_library(self.conn, items)
         db.set_meta(self.conn, "library_refreshed", str(int(time.time())))
         log.info("library: %d items", len(items))
+        # Episode titles are extra: if they can't be read, the movies and shows above still stand.
+        try:
+            episodes = await source.library_episodes()
+        except Exception as exc:  # the old episode list stays until the next refresh
+            log.warning("library episodes: %s", exc)
+            return
+        if source is not self.source:
+            return
+        write_episodes(self.conn, episodes)
+        log.info("library: %d episodes", len(episodes))
 
     def kick(self) -> None:
         """The server changed: look it up again and reload its guide and library now."""

@@ -106,6 +106,8 @@ def _match_lines(res: dict) -> list[str]:
     for li in res["library"][:8]:
         lines.append(f"Library {li['kind']}: {li['title']} ({li['year']}) | {round((li['duration'] or 0) / 60000)} min"
                      f" | {li['genres']} | {li['content_rating']}{' | watched' if li['watched'] else ''}")
+    for e in res["episodes"][:8]:
+        lines.append(f"Library episode: {e['show_title']} {e['label']}")
     return lines
 
 

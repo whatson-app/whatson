@@ -60,6 +60,19 @@ CREATE VIRTUAL TABLE IF NOT EXISTS library_fts USING fts5 (
     title, summary, genres, people, tokenize = 'unicode61 remove_diacritics 2'
 );
 
+CREATE TABLE IF NOT EXISTS episodes (
+    rating_key TEXT PRIMARY KEY,
+    show_key   TEXT NOT NULL,           -- the show's rating_key in library
+    show_title TEXT NOT NULL DEFAULT '',
+    season     INTEGER,
+    idx        INTEGER,                 -- episode number in the season
+    title      TEXT NOT NULL
+);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS episodes_fts USING fts5 (
+    title, tokenize = 'unicode61 remove_diacritics 2'
+);
+
 CREATE TABLE IF NOT EXISTS games (
     id         TEXT PRIMARY KEY,
     league     TEXT NOT NULL,
@@ -176,7 +189,8 @@ def connect(path: Path | str) -> sqlite3.Connection:
 def clear_server_data(conn: sqlite3.Connection) -> None:
     """Everything tied to one server's ids, for when WhatsOn moves to another. Favorite channels go too:
     the other server's channels have different ids."""
-    for table in ("channels", "airings", "airings_fts", "library", "library_fts", "fav_channels", "user_watched"):
+    for table in ("channels", "airings", "airings_fts", "library", "library_fts", "episodes", "episodes_fts",
+                  "fav_channels", "user_watched"):
         conn.execute(f"DELETE FROM {table}")
     for key in ("machine_id", "guide_refreshed", "library_refreshed"):
         conn.execute("DELETE FROM meta WHERE key = ?", (key,))
