@@ -14,7 +14,7 @@ from urllib.parse import quote
 
 import httpx
 
-from .base import Airing, Channel, LibraryItem, Session, classify
+from .base import Airing, Channel, Episode, LibraryItem, Session, classify
 
 TICKS_PER_MS = 10_000
 COMMANDS = {"PlayPause", "Pause", "Unpause", "Stop", "NextTrack", "PreviousTrack", "Seek"}
@@ -190,6 +190,13 @@ class Jellyfin:
                                  Fields="Overview,Genres,People,ProviderIds,DateCreated,OfficialRating,RecursiveItemCount",
                                  **self._user())
         return [_library_item(m) for m in rows]
+
+    async def library_episodes(self) -> list[Episode]:
+        rows = await self._pages("/Items", Recursive="true", IncludeItemTypes="Episode", EnableImages="false",
+                                 EnableUserData="false", **self._user())
+        return [Episode(rating_key=m["Id"], show_key=m["SeriesId"], show_title=m.get("SeriesName") or "",
+                        season=m.get("ParentIndexNumber"), index=m.get("IndexNumber"), title=m["Name"])
+                for m in rows if m.get("Id") and m.get("SeriesId") and m.get("Name")]
 
     async def sessions(self) -> list[JellyfinSession]:
         out = []

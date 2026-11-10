@@ -43,6 +43,19 @@ export function airingCard(a) {
     </article>`;
 }
 
+export function episodeCard(e) {
+  return `
+    <article class="card">
+      <div class="meta"><span>In your library</span></div>
+      <div class="title">${esc(e.show_title)}</div>
+      <div class="sub">${esc(e.label)}</div>
+      <div class="chips">
+        <button class="chip primary-chip" data-rating-key="${esc(e.rating_key)}">▶ Play</button>
+        <button class="chip" data-show="${esc(e.show_key)}">Open the show</button>
+      </div>
+    </article>`;
+}
+
 export function posterCard(it, { label = "", reason = "" } = {}) {
   const open = it.kind === "show" ? `data-show="${esc(it.rating_key)}"` : `data-movie="${esc(it.rating_key)}"`;
   const progress = it.kind === "show" && it.leaf_count ? Math.round((it.viewed_leaf_count / it.leaf_count) * 100) : 0;

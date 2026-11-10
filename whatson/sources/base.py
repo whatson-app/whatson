@@ -64,6 +64,17 @@ class LibraryItem:
 
 
 @dataclass
+class Episode:
+    """One episode of a show in the library, kept so search can find an episode by its own title (ADR 0030)."""
+    rating_key: str
+    show_key: str                  # the show's rating_key in the library
+    show_title: str
+    season: int | None
+    index: int | None
+    title: str
+
+
+@dataclass
 class Session:
     player_title: str
     player_address: str
@@ -113,6 +124,10 @@ class Source(Protocol):
 
     async def library(self) -> list[LibraryItem]:
         """Every movie and show. Called on a slow timer; the result replaces the local copy."""
+
+    async def library_episodes(self) -> list[Episode]:
+        """Every episode's title, season and number, for search. Called right after library(); the result replaces
+        the local copy. Keep each request light: this can be tens of thousands of episodes."""
 
     async def playing(self) -> list[Session]:
         """What's playing now. The busy check relies on this, so it must say which TV each session is on."""

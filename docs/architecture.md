@@ -95,7 +95,8 @@ Default intervals: games 5 minutes (30 seconds while a followed team or league i
    without saying more ([ADR 0028](adr/0028-sort-bare-guide-listings.md)). `link_games` matches sports and placeholder listings to games
    ([ADR 0014](adr/0014-match-espn-games-to-listings.md)), and `write_guide` replaces the tables and search index in one
    transaction.
-4. Load the library the same way.
+4. Load the library the same way, then its episode titles ([ADR 0030](adr/0030-search-episode-titles.md)). If the
+   episodes fail to load, the library is still written and the previous episodes stay.
 
 If the source was switched while a load was running, the result is thrown away.
 
@@ -103,7 +104,7 @@ If the source was switched while a load was running, the result is thrown away.
 
 1. `GET /api/search` gets filters one of three ways: replayed from edited chips, read from the question by AI, or read
    from keywords. See [ADR 0015](adr/0015-filters-are-the-search-contract.md).
-2. `search.run` queries games, the guide and the library over the local data. When AI read the question, it also searches the words as
+2. `search.run` queries games, the guide, the library and episode titles over the local data. When AI read the question, it also searches the words as
    typed and returns those matches first, in `typed` ([ADR 0029](adr/0029-show-typed-matches-beside-the-ai-reading.md)).
 3. When AI read the question, the front end then calls `GET /api/answer` for one line written from those matches only.
 4. With Radarr or Sonarr set up, it also calls `GET /api/get/lookup` for titles you could get.

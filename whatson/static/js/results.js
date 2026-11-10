@@ -1,8 +1,8 @@
-// The results page of the search bar: games, what's on TV, movies and shows you have, and (with
+// The results page of the search bar: games, what's on TV, movies, shows and episodes you have, and (with
 // Radarr/Sonarr set up) titles you could get. After an AI reading, matches for the words as typed come first.
 
 import { $, esc } from "./core.js";
-import { airingCard, gameCard, posterCard, row } from "./cards.js";
+import { airingCard, episodeCard, gameCard, posterCard, row } from "./cards.js";
 import { getRow } from "./get.js";
 
 export function renderResults(el, res) {
@@ -13,9 +13,10 @@ export function renderResults(el, res) {
     const airings = r.guide.filter((a) => !(a.game && ids.has(a.game.id)));
     return row("Games", cards(r.games, gameCard)) + row("On TV", cards(airings, airingCard))
       + row("Movies", posters(r.library.filter((it) => it.kind === "movie")))
-      + row("TV shows", posters(r.library.filter((it) => it.kind === "show")));
+      + row("TV shows", posters(r.library.filter((it) => it.kind === "show")))
+      + row("Episodes", cards(r.episodes || [], episodeCard));
   };
-  const found = (r) => r.games.length + r.guide.length + r.library.length;
+  const found = (r) => r.games.length + r.guide.length + r.library.length + (r.episodes || []).length;
   // With AI on, matches for the words as typed come first, so a misreading can't hide what was asked for.
   const groups = res.typed
     ? `<p class="group-head">Matches for “${esc(res.typed.text)}”</p>${rows(res.typed)}`
