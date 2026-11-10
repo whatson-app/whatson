@@ -4,6 +4,8 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+## 0.2.8 - 2026-11-10
+
 ### Added
 - **Search finds episodes by their name.** Type an episode's title, like "Duck Duck Loon", and it shows in a new
   Episodes row with its show and number, ready to play or open the show. Before, only movie and show names were
