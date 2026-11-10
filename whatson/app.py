@@ -169,7 +169,8 @@ async def status():
 @app.get("/api/search")
 async def do_search(q: str = "", scope: str = "all", ai: bool = True, on_now: bool = False,
                     kind: str = "", filters: str = "", device: int = 0):
-    """Search one section. `filters` (JSON) replays edited chips without asking the AI again."""
+    """Search one section. `filters` (JSON) replays edited chips without asking the AI again. When AI read `q`,
+    or chips from an AI reading are replayed with `q`, matches for the words as typed come back first in `typed`."""
     note = ""
     if filters:
         try:
@@ -180,14 +181,27 @@ async def do_search(q: str = "", scope: str = "all", ai: bool = True, on_now: bo
         f, note = await state.interpreter.interpret(q)
     else:
         f = search.basic_filters(q)
-    if scope != "all":
-        f.scope = scope
-    if kind in ("movie", "show") and f.scope == "library":
-        f.kinds = [kind]
-    f.on_now = f.on_now or on_now
+
+    def scoped(f: search.Filters) -> search.Filters:
+        if scope != "all":
+            f.scope = scope
+        if kind in ("movie", "show") and f.scope == "library":
+            f.kinds = [kind]
+        f.on_now = f.on_now or on_now
+        return f
+
+    f = scoped(f)
     out = search.run(state.conn, f)
+    typed = None
+    if q and (filters or note):
+        typed = search.split_typed(search.run(state.conn, scoped(search.basic_filters(q))), out)
+        if typed:
+            typed["text"] = q
     if user := plex_users.viewer(device):
         plex_users.apply_watched(user, out["library"])
+        if typed:
+            plex_users.apply_watched(user, typed["library"])
+    out["typed"] = typed
     out["note"] = note
     out["ai"] = bool(note)
     out["filters"] = search.filters_dict(f)

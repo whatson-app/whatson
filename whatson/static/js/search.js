@@ -114,8 +114,10 @@ export function mountSearch(root, { scope, kind = "", placeholder, onResults, on
     if (!b || !filters) return;
     const next = without(filters, b.dataset.chip);
     const wasAi = chips.querySelector(".chip.ai") !== null;
+    // After an AI reading, the words as typed still come first, so send them along.
+    const typed = wasAi ? `&q=${encodeURIComponent(query)}` : "";
     await search(async () => {
-      const r = await api(`/api/search?scope=${scope}&kind=${kind}&${deviceParam()}&filters=${encodeURIComponent(JSON.stringify(next))}`);
+      const r = await api(`/api/search?scope=${scope}&kind=${kind}&${deviceParam()}${typed}&filters=${encodeURIComponent(JSON.stringify(next))}`);
       r.ai = wasAi;
       return r;
     }, "Searching…");

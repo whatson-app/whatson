@@ -335,6 +335,24 @@ def _games(conn: sqlite3.Connection, now: int, hours: int, where: str, args: lis
     return list(games.values())
 
 
+def _guide_key(a: dict) -> tuple:
+    return ("game", a["game"]["id"]) if a["game"] else (a["title"].lower(), a["subtitle"].lower(), a["begins"])
+
+
+def split_typed(typed: dict, res: dict) -> dict | None:
+    """Matches for the words as typed come first, so an AI misreading can't hide them (ADR 0029). Takes anything
+    they found out of `res`, the AI's reading, and returns them, or None when the typed words found nothing."""
+    if not (typed["games"] or typed["guide"] or typed["library"]):
+        return None
+    games = {g["id"] for g in typed["games"]}
+    guide = {_guide_key(a) for a in typed["guide"]}
+    library = {li["rating_key"] for li in typed["library"]}
+    res["games"] = [g for g in res["games"] if g["id"] not in games]
+    res["guide"] = [a for a in res["guide"] if _guide_key(a) not in guide]
+    res["library"] = [li for li in res["library"] if li["rating_key"] not in library]
+    return typed
+
+
 def run(conn: sqlite3.Connection, f: Filters) -> dict:
     guide = search_guide(conn, f) if f.scope in ("all", "guide") else []
     library = search_library(conn, f) if f.scope in ("all", "library") and not f.on_now else []

@@ -86,6 +86,15 @@ async def answer(q: str, filters: str, scope: str = "all"):
     if scope != "all":
         f.scope = scope
     res = search.run(state.conn, f)
+    typed_f = search.basic_filters(q)
+    typed_f.scope, typed_f.on_now = f.scope, typed_f.on_now or f.on_now
+    # The words as typed first, as the results page shows them (ADR 0029).
+    typed = search.split_typed(search.run(state.conn, typed_f), res)
+    lines = (_match_lines(typed) if typed else []) + _match_lines(res)
+    return {"answer": await state.interpreter.answer(q, lines)}
+
+
+def _match_lines(res: dict) -> list[str]:
     lines = []
     for g in res["games"][:5]:
         ch = g["channels"][0]["title"] if g["channels"] else ", ".join(g["networks"]) or "no channel"
@@ -97,7 +106,7 @@ async def answer(q: str, filters: str, scope: str = "all"):
     for li in res["library"][:8]:
         lines.append(f"Library {li['kind']}: {li['title']} ({li['year']}) | {round((li['duration'] or 0) / 60000)} min"
                      f" | {li['genres']} | {li['content_rating']}{' | watched' if li['watched'] else ''}")
-    return {"answer": await state.interpreter.answer(q, lines)}
+    return lines
 
 
 # --- Now playing --------------------------------------------------------------------------------

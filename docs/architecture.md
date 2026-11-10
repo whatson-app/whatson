@@ -103,7 +103,8 @@ If the source was switched while a load was running, the result is thrown away.
 
 1. `GET /api/search` gets filters one of three ways: replayed from edited chips, read from the question by AI, or read
    from keywords. See [ADR 0015](adr/0015-filters-are-the-search-contract.md).
-2. `search.run` queries games, the guide and the library over the local data.
+2. `search.run` queries games, the guide and the library over the local data. When AI read the question, it also searches the words as
+   typed and returns those matches first, in `typed` ([ADR 0029](adr/0029-show-typed-matches-beside-the-ai-reading.md)).
 3. When AI read the question, the front end then calls `GET /api/answer` for one line written from those matches only.
 4. With Radarr or Sonarr set up, it also calls `GET /api/get/lookup` for titles you could get.
 
