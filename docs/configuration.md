@@ -63,3 +63,6 @@ A key from the environment only goes to the provider's own address, never to `AI
 
 - WhatsOn listens on port 8430. The image sets this, not an environment variable.
 - `compose.yaml` uses host networking so the container can reach TVs on ports 6466 and 6467.
+- WhatsOn can be served under a path prefix, for example as a Home Assistant ingress panel at `/api/ingress/whatson/`.
+  The page uses relative addresses for its files and the API, so nothing needs setting for it. Open it with a trailing
+  slash. The proxy must keep WhatsOn's own address in the `Host` header, or that name must be in `ALLOWED_HOSTS`.

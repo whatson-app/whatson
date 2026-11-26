@@ -27,6 +27,7 @@ scripts when Node.js is installed. CI also runs gitleaks over the whole history,
 | `tests/test_trakt.py` | Trakt token refresh and its redirect URI |
 | `tests/test_settings_layout.py` | Settings tabs and links into them |
 | `tests/test_progress_ui.py` | Wiring for search and AI progress |
+| `tests/test_subpath.py` | The page uses relative addresses, so it works under a path prefix |
 | `tests/test_release.py` | Release notes and version checks |
 | `tests/test_unraid.py` | The Unraid template matches how the app runs |
 | `tests/test_version.py` | The status route reports the version |
