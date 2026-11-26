@@ -116,20 +116,48 @@ def _words(text: str) -> list[str]:
     return [w for w in re.findall(r"[\w']+", text.lower()) if w not in STOPWORDS]
 
 
+def stem(word: str) -> str:
+    """The word without a common ending, so "killed" finds "Kill" and "bears" finds "Bear". Searched as a prefix,
+    so the stem only has to be the start of the word. Short words are left alone ("red", "news", "speed")."""
+    if not word.isalpha():
+        return word
+    for ending in ("ing", "ed", "es", "s"):
+        base = word[: -len(ending)]
+        if word.endswith(ending) and len(base) >= 4 and not (ending == "s" and base[-1] in "su"):
+            if base[-1] == base[-2] and base[-1] not in "lsz":   # "stopped" -> "stop", but "killed" -> "kill"
+                base = base[:-1]
+            return base
+    return word
+
+
+# How strictly the search words are matched, tried in this order until something matches (see run()).
+LEVELS = ("exact", "stem", "loose")
+
+
 def enough_words(text: str, hay: str) -> bool:
     """For the any-word fallback: a result must contain all but one of the search words, each at the
     start of a word. One shared word isn't enough ("green bay packers" must not find "Big City Greens")."""
-    words = _words(text)
+    words = [stem(w) for w in _words(text)]
     hay = hay.lower()
     hits = sum(1 for w in words if re.search(rf"\b{re.escape(w)}", hay))
     return hits >= max(1, len(words) - 1)
 
 
-def fts_query(text: str, any_word: bool = False) -> str:
-    words = _words(text)
+def fts_query(text: str, any_word: bool = False, stemmed: bool = False) -> str:
+    words = [stem(w) if stemmed else w for w in _words(text)]
     if not words:
         return ""
-    return (" OR " if any_word else " ").join(f'"{w.replace(chr(34), "")}"*' for w in words)
+    return (" OR " if any_word else " ").join(f'"{w.replace(chr(34), "")}"*' for w in dict.fromkeys(words))
+
+
+def _level_query(text: str, level: str) -> str:
+    """The FTS query for one level, or "" when the level adds nothing (the stems are the words as typed)."""
+    if level == "loose" and len(_words(text)) < 2:
+        return ""
+    q = fts_query(text, any_word=level == "loose", stemmed=level != "exact")
+    if level == "stem" and q == fts_query(text):
+        return ""
+    return q
 
 
 def basic_filters(text: str) -> Filters:
@@ -156,7 +184,8 @@ def _channel_rank(vcn: str, title: str) -> tuple:
     return (num >= GAME_SLOT_MIN_VCN, "antenna" not in title.lower(), num)
 
 
-def search_guide(conn: sqlite3.Connection, f: Filters, now: int | None = None) -> list[dict]:
+def search_guide(conn: sqlite3.Connection, f: Filters, now: int | None = None,
+                 levels: tuple[str, ...] = LEVELS) -> list[dict]:
     now = now or int(time.time())
     horizon = now + (f.within_minutes * 60 if f.within_minutes else 48 * 3600)
     where = ["a.ends > ?", "a.begins < ?"]
@@ -198,20 +227,21 @@ def search_guide(conn: sqlite3.Connection, f: Filters, now: int | None = None) -
              LEFT JOIN games g ON g.id = a.game_id
              WHERE {where} ORDER BY rank, a.begins LIMIT 400"""
     rows: list[sqlite3.Row] = []
-    for any_word in (False, True):
-        q = fts_query(f.text, any_word)
-        if q:
-            rows = conn.execute(sql.format(
-                rank="bm25(airings_fts, 10.0, 4.0, 1.0, 2.0, 8.0)",
-                src="airings_fts JOIN airings a ON a.id = airings_fts.rowid",
-                where=" AND ".join(["airings_fts MATCH ?"] + where)), [q] + args).fetchall()
-            if any_word:
-                rows = [r for r in rows if enough_words(f.text, " ".join(str(r[k] or "") for k in (
-                    "title", "subtitle", "summary", "ch_title", "g_name", "g_home", "g_away")))]
-        else:
-            rows = conn.execute(sql.format(rank="0", src="airings a", where=" AND ".join(where)),
-                                args).fetchall()
-        if rows or not q:
+    if not fts_query(f.text):
+        rows = conn.execute(sql.format(rank="0", src="airings a", where=" AND ".join(where)), args).fetchall()
+        return _group(rows, now)[: f.limit]
+    for level in levels:
+        q = _level_query(f.text, level)
+        if not q:
+            continue
+        rows = conn.execute(sql.format(
+            rank="bm25(airings_fts, 10.0, 4.0, 1.0, 2.0, 8.0)",
+            src="airings_fts JOIN airings a ON a.id = airings_fts.rowid",
+            where=" AND ".join(["airings_fts MATCH ?"] + where)), [q] + args).fetchall()
+        if level == "loose":
+            rows = [r for r in rows if enough_words(f.text, " ".join(str(r[k] or "") for k in (
+                "title", "subtitle", "summary", "ch_title", "g_name", "g_home", "g_away")))]
+        if rows:
             break
     return _group(rows, now)[: f.limit]
 
@@ -241,7 +271,7 @@ def _group(rows: list[sqlite3.Row], now: int) -> list[dict]:
     return out
 
 
-def search_library(conn: sqlite3.Connection, f: Filters) -> list[dict]:
+def search_library(conn: sqlite3.Connection, f: Filters, levels: tuple[str, ...] = LEVELS) -> list[dict]:
     kinds = [k for k in f.kinds if k in ("movie", "show")]
     if "episode" in f.kinds and "show" not in kinds:
         kinds.append("show")
@@ -266,16 +296,16 @@ def search_library(conn: sqlite3.Connection, f: Filters) -> list[dict]:
         where.append(f"l.content_rating IN ({','.join('?' * len(allowed))})")
         args += list(allowed)
     rows: list[sqlite3.Row] = []
-    for any_word in (False, True):
-        q = fts_query(f.text, any_word)
+    for level in levels if fts_query(f.text) else ():
+        q = _level_query(f.text, level)
         if not q:
-            break
+            continue
         rows = conn.execute(
             "SELECT l.*, bm25(library_fts, 10.0, 1.0, 2.0, 3.0) AS rank FROM library_fts "
             "JOIN library l ON l.rowid = library_fts.rowid WHERE "
-            + " AND ".join(["library_fts MATCH ?"] + where) + " ORDER BY rank LIMIT ?",
-            [q] + args + [f.limit]).fetchall()
-        if any_word:
+            + " AND ".join(["library_fts MATCH ?"] + where) + " ORDER BY lower(l.title) = ? DESC, rank LIMIT ?",
+            [q] + args + [f.text.strip().lower(), f.limit]).fetchall()
+        if level == "loose":
             rows = [r for r in rows if enough_words(f.text, " ".join(str(r[k] or "") for k in (
                 "title", "summary", "genres", "people")))]
         if rows:
@@ -289,11 +319,11 @@ def search_library(conn: sqlite3.Connection, f: Filters) -> list[dict]:
 EPISODE_LIMIT = 20  # a one-word search can match hundreds of episode titles
 
 
-def search_episodes(conn: sqlite3.Connection, f: Filters) -> list[dict]:
+def search_episodes(conn: sqlite3.Connection, f: Filters, level: str = "exact") -> list[dict]:
     """Episodes whose own title has every search word, so "duck duck loon" finds that episode of a show whose
     name shares none of those words (ADR 0030). Only for text searches; the show's genres, rating and year
-    stand in for the episode's."""
-    q = fts_query(f.text)
+    stand in for the episode's. Never loose: one shared word matches hundreds of episode titles."""
+    q = _level_query(f.text, level) if level != "loose" else ""
     if not q or (f.kinds and not {"show", "episode"} & set(f.kinds)):
         return []
     where, args = ["episodes_fts MATCH ?"], [q]
@@ -399,9 +429,19 @@ def split_typed(typed: dict, res: dict) -> dict | None:
     return typed
 
 
-def run(conn: sqlite3.Connection, f: Filters) -> dict:
-    guide = search_guide(conn, f) if f.scope in ("all", "guide") else []
-    library = search_library(conn, f) if f.scope in ("all", "library") and not f.on_now else []
-    games = search_games(conn, f) if f.scope in ("all", "guide") else []
-    episodes = search_episodes(conn, f) if f.scope in ("all", "library") and not f.on_now else []
+def run(conn: sqlite3.Connection, f: Filters, now: int | None = None) -> dict:
+    """Tries each level (LEVELS) on every section together and stops at the first that finds anything, so a
+    library title that matches the words keeps the guide from filling up with one-word near misses."""
+    on_guide = f.scope in ("all", "guide")
+    on_library = f.scope in ("all", "library") and not f.on_now
+    games = search_games(conn, f, now) if on_guide else []
+    guide: list[dict] = []
+    library: list[dict] = []
+    episodes: list[dict] = []
+    for level in LEVELS if fts_query(f.text) else ("exact",):
+        guide = search_guide(conn, f, now, levels=(level,)) if on_guide else []
+        library = search_library(conn, f, levels=(level,)) if on_library else []
+        episodes = search_episodes(conn, f, level) if on_library else []
+        if guide or library or episodes:
+            break
     return {"games": games, "guide": guide, "library": library, "episodes": episodes}

@@ -258,6 +258,38 @@ def test_any_word_fallback_needs_most_words():
     assert [i["title"] for i in search.search_guide(search_db(), search.Filters(text="big city ducks"), NOW)] == ["Big City Greens"]
 
 
+def test_stem_drops_common_endings_but_leaves_short_words():
+    assert [search.stem(w) for w in ("killed", "bears", "stopped", "running", "movies", "news", "speed", "red", "bus")] \
+        == ["kill", "bear", "stop", "run", "movi", "news", "speed", "red", "bus"]
+    assert search.fts_query("killed bears", stemmed=True) == '"kill"* "bear"*'
+
+
+def stem_db():
+    conn = db.connect(":memory:")
+    channels = [Channel("1", "1", "FOX 6"), Channel("2", "2", "PBS")]
+    airings = [Airing("1", "Live: NFL Football", "", "Otters at Badgers", "sports", NOW - 600, NOW + 3600),
+               Airing("2", "Badger Country", "", "A year with the badgers", "episode", NOW, NOW + 1800)]
+    write_guide(conn, channels, airings, [])
+    write_library(conn, [LibraryItem("1", "show", "I Chase the Badger", 2026, "A thriller", ["Drama"]),
+                         LibraryItem("2", "movie", "Chaser", 2001, "Racing", ["Action"]),
+                         LibraryItem("3", "movie", "Chaser Two", 2004, "More racing", ["Action"])])
+    return conn
+
+
+def test_a_search_word_with_another_ending_still_finds_the_title():
+    # "chased" is in no title, so the words as typed find nothing; with endings dropped "chase badger" finds the show.
+    res = search.run(stem_db(), search.basic_filters("I chased the badger"), NOW)
+    assert [i["title"] for i in res["library"]] == ["I Chase the Badger"]
+    # A library match stops the one-word near misses ("badger" alone) from filling the guide.
+    assert res["guide"] == []
+
+
+def test_words_as_typed_win_over_their_stems_and_an_exact_title_comes_first():
+    # "chaser" as typed matches; its stem "chase" would also pull in "I Chase the Badger", and mustn't.
+    titles = [i["title"] for i in search.run(stem_db(), search.basic_filters("chaser"), NOW)["library"]]
+    assert titles[0] == "Chaser" and "I Chase the Badger" not in titles
+
+
 def test_following_a_school_covers_its_other_college_sports_but_pro_ids_stay_in_their_league():
     rows = [{"league": "football/college-football", "team_id": "901"}, {"league": "hockey/nhl", "team_id": "4"}]
     keys = espn.followed_team_keys(rows)

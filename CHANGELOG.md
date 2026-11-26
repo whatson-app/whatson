@@ -4,6 +4,12 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Fixed
+- **Search finds a title when a word has another ending.** "I killed the bear" now finds *I Kill the Bear*:
+  when the words as typed find nothing, search tries them again without endings like -ed, -ing and -s. A search
+  that finds a real match in one section no longer fills the others with near misses that share one word, and a
+  library title that is exactly what you typed comes first.
+
 ## 0.2.9 - 2026-11-26
 
 ### Added
