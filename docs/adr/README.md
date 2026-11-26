@@ -82,3 +82,4 @@ Never rewrite an accepted ADR's reasoning. Fix a typo or add a link, but change 
 | [0028](0028-sort-bare-guide-listings.md) | Sort bare guide listings from patterns across the guide | Proposed |
 | [0029](0029-show-typed-matches-beside-the-ai-reading.md) | Show matches for the words as typed beside the AI's reading | Accepted |
 | [0030](0030-search-episode-titles.md) | Search finds episodes by their own titles | Proposed |
+| [0031](0031-search-tries-stricter-matches-first.md) | Search tries the words as typed, then without their endings, then most of them | Proposed |

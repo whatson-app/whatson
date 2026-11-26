@@ -317,6 +317,9 @@ async def library(kind: str = "movie", sort: str = "added", genre: str = "", q: 
         if sort == "added" and q:
             order = "bm25(library_fts, 10.0, 1.0, 2.0, 3.0)"
     total = state.conn.execute(f"SELECT count(*) FROM {src} WHERE {' AND '.join(where)}", args).fetchone()[0]
+    if fq and not total and (stemmed := search.fts_query(q, stemmed=True)) != fq:
+        args[0] = stemmed   # "killed" finds "Kill" when the words as typed find nothing
+        total = state.conn.execute(f"SELECT count(*) FROM {src} WHERE {' AND '.join(where)}", args).fetchone()[0]
     rows = state.conn.execute(f"SELECT l.* FROM {src} WHERE {' AND '.join(where)} ORDER BY {order} LIMIT ? OFFSET ?",
                               args + [min(limit, 200), offset]).fetchall()
     items = [search.library_item(r) for r in rows]
