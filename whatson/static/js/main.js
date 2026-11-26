@@ -83,7 +83,7 @@ document.addEventListener("click", (ev) => {
 
 $("#open-settings").addEventListener("click", () => openSettings("tvs"));
 $("#settings").addEventListener("close", async () => {
-  const st = await fetch("/api/status").then((r) => r.json()).catch(() => ({}));
+  const st = await fetch("api/status").then((r) => r.json()).catch(() => ({}));
   const wasOff = !$("#connect-source").hidden;
   $("#connect-source").hidden = st.connected !== false;
   ai.on = Boolean(st.ai);
@@ -111,7 +111,7 @@ initSettings();
   await loadDevices().catch(() => {});
   refreshNow();
   // Before the first screen, so it knows whether to show that AI is working.
-  const st = await fetch("/api/status").then((r) => r.json()).catch(() => ({}));
+  const st = await fetch("api/status").then((r) => r.json()).catch(() => ({}));
   ai.on = Boolean(st.ai);
   route();
   // First run: nothing works until a server is connected.

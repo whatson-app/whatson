@@ -72,7 +72,7 @@ def test_guide_channels_and_listings():
     channels, airings = run(jf.load_guide(0, 1))
     assert channels[0].vcn == "12" and channels[1].vcn == "13" and channels[1].thumb == ""
     # Channel art is used as an address directly, so the browser must only ever be pointed at WhatsOn.
-    assert channels[0].thumb.startswith("/api/thumb?path=%2FItems%2F") and "jf.example.com" not in channels[0].thumb
+    assert channels[0].thumb.startswith("api/thumb?path=%2FItems%2F") and "jf.example.com" not in channels[0].thumb
     assert [(a.kind, a.subtitle) for a in airings] == [("episode", "S01E22 The Pool"), ("movie", ""), ("sports", "")]
     assert airings[0].ends - airings[0].begins == 1800 and airings[1].year == 1995
 

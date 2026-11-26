@@ -4,6 +4,11 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Added
+- **WhatsOn works under a path prefix.** The page now asks for its files and the API with relative addresses, so it
+  can sit behind a proxy that serves it from a sub-path, such as a Home Assistant ingress panel at
+  `/api/ingress/whatson/`. Opening it directly at its own address works as before.
+
 ## 0.2.8 - 2026-11-10
 
 ### Added

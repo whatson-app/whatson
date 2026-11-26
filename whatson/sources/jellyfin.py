@@ -179,7 +179,7 @@ class Jellyfin:
             art = _poster(c)
             channels.append(Channel(id=c["Id"], vcn=str(c.get("ChannelNumber") or c.get("Number") or c["Id"]),
                                     title=c.get("Name", ""),
-                                    thumb=f"/api/thumb?path={quote(art, safe='')}&width=120" if art else ""))
+                                    thumb=f"api/thumb?path={quote(art, safe='')}&width=120" if art else ""))
         programs = await self._pages("/LiveTv/Programs", MinEndDate=_iso(start), MaxStartDate=_iso(end),
                                      Fields="Overview,Genres", EnableImages="false", EnableUserData="false",
                                      **self._user())

@@ -32,8 +32,11 @@ export function applyTheme(theme) {
   }
 }
 
+/** Turns "/api/x" into "api/x", so the page works under a path prefix such as a Home Assistant ingress panel. */
+export const rel = (url) => (url.startsWith("/") && !url.startsWith("//") ? url.slice(1) : url);
+
 export async function api(path, opts = {}) {
-  const res = await fetch(path, {
+  const res = await fetch(rel(path), {
     ...opts,
     headers: { "X-WhatsOn": "1", ...(opts.body ? { "Content-Type": "application/json" } : {}) },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
@@ -92,7 +95,7 @@ export const fmtMins = (ms) => {
   return m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}` : `${m} min`;
 };
 export const thumbUrl = (path, width = 300) =>
-  path ? `/api/thumb?path=${encodeURIComponent(path)}&width=${width}` : "";
+  path ? `api/thumb?path=${encodeURIComponent(path)}&width=${width}` : "";
 
 export const isPhone = () => window.matchMedia("(max-width: 700px)").matches;
 
