@@ -8,7 +8,7 @@
 A search for "I killed the bear" didn't surface the show "I Kill the Bear". Each search word is matched as the start of
 a word, and "killed" isn't the start of "Kill". When no listing had every word, the guide and the library each fell back
 on their own to any listing with all but one of the words, which for a two-word search means either word. So "bear"
-filled On TV with Chicago Bears games and the library with every bear film, and the show sat third in its row under
+filled On TV with games for teams named Bears and the library with every bear film, and the show sat third in its row under
 them.
 
 ## Decision
