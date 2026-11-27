@@ -578,7 +578,13 @@ async def suggest_library(device: int = 0):
         if not up_next:
             source = state.source.name
             up_next = await state.source.up_next()
-    picks = await suggest.ai_rank(state.interpreter, "library", pool, 4, suggest.taste_context(cache))
+    # Tonight's pick holds for the evening (keyed by day and viewer) and changes the next day.
+    day = suggest.pick_day()
+    pool = suggest.tonights_pool(state.conn, pool, 4, day)
+    picks = await suggest.ai_rank(state.interpreter, f"library:{day}:{user or ''}", pool, 4,
+                                  suggest.taste_context(cache), ttl=24 * 3600)
+    if not user:
+        suggest.remember_pick(state.conn, picks, day)
     return {"up_next": up_next, "up_next_source": source, "source_label": state.source.label, "picks": picks,
             "missing": suggest.watchlist_missing(state.conn, cache),
             "get": {k: arr.load(state.conn, k).configured for k in arr.KINDS},

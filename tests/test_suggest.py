@@ -141,3 +141,32 @@ def test_a_game_pick_is_named_for_the_game_not_the_channel():
     suggest._rank_cache.clear()
     asyncio.run(suggest.ai_rank(Ranker(), "t", [pick], 4))
     assert Ranker.seen[0]["text"].startswith("Comets at Otters")
+
+
+def test_tonights_pick_changes_by_day_and_rests_for_a_week():
+    conn = db.connect(":memory:")
+    write_library(conn, [LibraryItem(str(k), "movie", f"Film {k}", 2000, "", ["Drama"], [], added_at=NOW,
+                                     audience_rating=8.0) for k in range(1, 41)])
+    pools = {d: [c["rating_key"] for c in suggest.tonights_pool(conn, suggest.library_candidates(conn, {}), 4, d)]
+             for d in ("2026-11-25", "2026-11-26")}
+    assert pools["2026-11-25"] != pools["2026-11-26"]  # a new sample and order each day
+    pool = suggest.tonights_pool(conn, suggest.library_candidates(conn, {}), 4, "2026-11-25")
+    suggest.remember_pick(conn, pool, "2026-11-25")
+    suggest.remember_pick(conn, pool[1:], "2026-11-25")  # a later load the same evening doesn't move it
+    top = pool[0]["rating_key"]
+    assert suggest._pick_history(conn) == {top: "2026-11-25"}
+    for later, rests in (("2026-11-25", False), ("2026-11-26", True), ("2026-12-02", True), ("2026-12-03", False)):
+        keys = [c["rating_key"] for c in suggest.tonights_pool(conn, pool, 4, later)]
+        assert (top not in keys) == rests, later
+
+
+def test_a_small_pool_keeps_a_resting_pick_rather_than_run_dry():
+    conn = make()
+    pool = suggest.library_candidates(conn, {})
+    suggest.remember_pick(conn, pool, "2026-11-25")
+    assert [c["rating_key"] for c in suggest.tonights_pool(conn, pool, 4, "2026-11-26")] == ["55"]
+
+
+def test_pick_day_rolls_over_at_4am():
+    assert suggest.pick_day(datetime(2026, 11, 26, 1, 30)) == "2026-11-25"
+    assert suggest.pick_day(datetime(2026, 11, 26, 19, 0)) == "2026-11-26"

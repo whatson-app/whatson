@@ -5,11 +5,14 @@ Decisions: ADR 0016, 0018."""
 
 from __future__ import annotations
 
+import json
+import random
 import re
 import sqlite3
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
+from . import db
 from .ai import Interpreter
 from .sources import espn
 from .trakt import guid_keys, norm_title
@@ -186,10 +189,54 @@ def library_candidates(conn: sqlite3.Connection, cache: dict) -> list[dict]:
     for item in cache.get("recommended", []):
         if item["kind"] == "movie":
             add(match_library(conn, "movie", item), "Trakt recommends it")
-    for row in conn.execute("""SELECT * FROM library WHERE kind = 'movie' AND watched = 0 AND audience_rating >= 7
-                               ORDER BY added_at DESC LIMIT 25"""):
+    # Well-rated unwatched movies: a new sample each day (seeded, so it holds all evening), not the
+    # newest 25, which only changed when a movie was added.
+    rated = conn.execute("""SELECT * FROM library WHERE kind = 'movie' AND watched = 0 AND audience_rating >= 7
+                            ORDER BY rating_key""").fetchall()
+    for row in random.Random(pick_day()).sample(rated, min(25, len(rated))):
         add(row, f"Rated {row['audience_rating']:.1f} by audiences")
     return list(pool.values())
+
+
+PICK_REST_DAYS = 7
+
+
+def pick_day(now: datetime | None = None) -> str:
+    """The evening a pick belongs to: the day rolls over at 4am, so a late film keeps its pick."""
+    return ((now or datetime.now()) - timedelta(hours=4)).date().isoformat()
+
+
+def _pick_history(conn: sqlite3.Connection) -> dict[str, str]:
+    try:
+        return json.loads(db.get_meta(conn, "pick_history", "{}"))
+    except ValueError:
+        return {}
+
+
+def tonights_pool(conn: sqlite3.Connection, pool: list[dict], want: int, day: str | None = None) -> list[dict]:
+    """The pool for one evening: movies that were tonight's pick in the last week rest (while enough
+    others remain), and the order is shuffled for the day so the AI doesn't always favour the first."""
+    day = day or pick_day()
+    since = (datetime.fromisoformat(day) - timedelta(days=PICK_REST_DAYS)).date().isoformat()
+    resting = {k for k, d in _pick_history(conn).items() if since <= d < day}
+    fresh = [c for c in pool if c["rating_key"] not in resting]
+    out = fresh if len(fresh) >= want else pool
+    out = list(out)
+    random.Random(day).shuffle(out)
+    return out
+
+
+def remember_pick(conn: sqlite3.Connection, picks: list[dict], day: str | None = None) -> None:
+    """Note tonight's top pick so it rests for a week; keeps only the last month."""
+    if not picks:
+        return
+    day = day or pick_day()
+    hist = _pick_history(conn)
+    if day in hist.values():
+        return  # tonight already has its pick
+    hist[picks[0]["rating_key"]] = day
+    cutoff = (datetime.fromisoformat(day) - timedelta(days=30)).date().isoformat()
+    db.set_meta(conn, "pick_history", json.dumps({k: d for k, d in hist.items() if d >= cutoff}))
 
 
 LATE = re.compile(r"\b(4th|OT|2nd half|3rd|8th|9th|extra|stoppage|9\d')", re.I)
@@ -214,14 +261,14 @@ def worth_switching(conn: sqlite3.Connection, now: int | None = None) -> list[di
 
 
 async def ai_rank(interpreter: Interpreter, key: str, candidates: list[dict], want: int,
-                  context: str = "") -> list[dict]:
-    """Candidates re-ordered by AI with its reasons, cached per key for 15 minutes. Falls back to the
+                  context: str = "", ttl: int = RANK_TTL) -> list[dict]:
+    """Candidates re-ordered by AI with its reasons, cached per key for `ttl` seconds. Falls back to the
     candidates' own order and rule reasons when AI is off or fails."""
     if not interpreter.enabled or not candidates:
         return candidates[:want]
     hit = _rank_cache.get(key)
     by_id = {c["id"]: c for c in candidates}
-    if hit and time.time() - hit[0] < RANK_TTL and all(p["id"] in by_id for p in hit[1]):
+    if hit and time.time() - hit[0] < ttl and all(p["id"] in by_id for p in hit[1]):
         picks = hit[1]
     else:
         lines = []
