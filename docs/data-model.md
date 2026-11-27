@@ -53,6 +53,7 @@ These hold what people set up. A new column needs an `ALTER TABLE` in `connect()
 | `machine_id` | The current server's id, used in Plezy links | |
 | `guide_refreshed` | Time of the last guide refresh | |
 | `library_refreshed` | Time of the last library refresh | |
+| `pick_history` | Movie id → evening it was Tonight's pick, last 30 days, so a pick rests for a week (ADR 0032) | |
 | `plex.source` | `signin` or `token` | |
 | `plex.url` | Server address | |
 | `plex.server_id` | Server id | |

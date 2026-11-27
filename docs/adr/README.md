@@ -83,3 +83,4 @@ Never rewrite an accepted ADR's reasoning. Fix a typo or add a link, but change 
 | [0029](0029-show-typed-matches-beside-the-ai-reading.md) | Show matches for the words as typed beside the AI's reading | Accepted |
 | [0030](0030-search-episode-titles.md) | Search finds episodes by their own titles | Proposed |
 | [0031](0031-search-tries-stricter-matches-first.md) | Search tries the words as typed, then without their endings, then most of them | Proposed |
+| [0032](0032-tonights-pick-changes-each-evening.md) | Tonight's pick changes each evening | Proposed |
