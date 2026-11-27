@@ -4,6 +4,11 @@ What changed in each version of WhatsOn, newest first.
 
 ## Unreleased
 
+### Fixed
+- **Tonight's pick changes each evening.** It showed the same movie every day. Now the well-rated movies it
+  picks from are a new sample each evening, the pick holds through the evening, and a movie that was the pick rests
+  for a week. ADR 0032.
+
 ## 0.2.10 - 2026-11-26
 
 ### Fixed
